@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Clock, LogOut, Bell, Settings, HelpCircle, ChevronRight, Shield, CreditCard, MessageCircle, Star, FileText, Info } from 'lucide-react-native';
+import { User, Clock, LogOut, Bell, Settings, HelpCircle, ChevronRight, Shield, CreditCard, MessageCircle, Star, FileText, Info, Crown, Store, Calendar, ArrowUpCircle } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,6 +68,39 @@ export default function ProfileScreen() {
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>{user.role}</Text>
             </View>
+          </View>
+        </View>
+
+        <View style={styles.subscriptionCard}>
+          <View style={styles.subscriptionHeader}>
+            <View style={styles.subscriptionTitleRow}>
+              <Crown size={20} color={colors.primary} />
+              <Text style={styles.subscriptionName}>Paket Starter</Text>
+            </View>
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>Aktif</Text>
+            </View>
+          </View>
+          <View style={styles.subscriptionDivider} />
+          <View style={styles.subscriptionDetail}>
+            <View style={styles.subscriptionRow}>
+              <Store size={16} color={colors.textSecondary} />
+              <Text style={styles.subscriptionLabel}>Penggunaan Cabang</Text>
+              <Text style={styles.subscriptionValue}>1/1</Text>
+            </View>
+            <View style={styles.usageBarBg}>
+              <View style={[styles.usageBarFill, { width: '100%' }]} />
+            </View>
+          </View>
+          <View style={styles.subscriptionFooter}>
+            <View style={styles.subscriptionDateRow}>
+              <Calendar size={14} color={colors.textTertiary} />
+              <Text style={styles.subscriptionDate}>Berlaku hingga 15 Mar 2026</Text>
+            </View>
+            <TouchableOpacity style={styles.upgradeButton}>
+              <ArrowUpCircle size={16} color={colors.white} />
+              <Text style={styles.upgradeButtonText}>Upgrade</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -469,6 +502,109 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: colors.error,
+  },
+  subscriptionCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.primaryBg,
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  subscriptionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  subscriptionName: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  activeBadge: {
+    backgroundColor: colors.successBg,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  activeBadgeText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: colors.success,
+  },
+  subscriptionDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginBottom: 12,
+  },
+  subscriptionDetail: {
+    marginBottom: 14,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  subscriptionLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  subscriptionValue: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  usageBarBg: {
+    height: 6,
+    backgroundColor: colors.borderLight,
+    borderRadius: 3,
+    overflow: 'hidden' as const,
+  },
+  usageBarFill: {
+    height: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+  },
+  subscriptionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subscriptionDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  subscriptionDate: {
+    fontSize: 13,
+    color: colors.textTertiary,
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  upgradeButtonText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.white,
   },
   versionText: {
     textAlign: 'center',
