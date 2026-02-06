@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,6 +7,7 @@ import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { OrderCard } from '@/components/OrderCard';
 import { PaymentStatus } from '@/types';
+import { OrdersSkeletonLoader } from '@/components/Skeleton';
 
 type FilterType = 'semua' | PaymentStatus;
 
@@ -25,6 +26,12 @@ export default function OrdersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilterIndex, setActiveFilterIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const getFilterCount = (filter: FilterType) => {
     if (filter === 'semua') return orders.length;
@@ -63,6 +70,14 @@ export default function OrdersScreen() {
   const handleOrderPress = (orderId: string) => {
     router.push(`/order-detail?id=${orderId}`);
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <OrdersSkeletonLoader />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

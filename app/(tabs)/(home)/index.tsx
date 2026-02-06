@@ -1,142 +1,187 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Wallet, ClipboardList, AlertTriangle, TrendingUp, Users, Building2, Package, FileText, BarChart3, Settings, ChevronRight, Droplets } from 'lucide-react-native';
+import { Wallet, ClipboardList, AlertTriangle, TrendingUp, Users, Building2, Package, FileText, ChevronRight, Droplets, Bell, Grid3x3 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency } from '@/utils/format';
 import { ShiftBanner } from '@/components/ShiftBanner';
 import { OrderCard } from '@/components/OrderCard';
+import { HomeSkeletonLoader } from '@/components/Skeleton';
 
-const menuItems = [
+const favoriteMenuItems = [
   { icon: Users, label: 'Pelanggan', color: '#3B82F6', bgColor: '#EFF6FF' },
   { icon: Building2, label: 'Cabang', color: '#8B5CF6', bgColor: '#F5F3FF' },
   { icon: Wallet, label: 'Keuangan', color: '#23A174', bgColor: '#ECFDF5' },
   { icon: Package, label: 'Inventaris', color: '#F59E0B', bgColor: '#FFFBEB' },
   { icon: FileText, label: 'Laporan', color: '#EC4899', bgColor: '#FDF2F8' },
-  { icon: BarChart3, label: 'Statistik', color: '#06B6D4', bgColor: '#ECFEFF' },
-  { icon: ClipboardList, label: 'Orders', color: '#6366F1', bgColor: '#EEF2FF' },
-  { icon: TrendingUp, label: 'Produksi', color: '#14B8A6', bgColor: '#F0FDFA' },
-  { icon: Settings, label: 'Pengaturan', color: '#64748B', bgColor: '#F8FAFC' },
 ];
+
+const lainnyaItem = { icon: Grid3x3, label: 'Lainnya', color: '#64748B', bgColor: '#F1F5F9' };
 
 export default function HomeScreen() {
   const router = useRouter();
   const { orders, shiftInfo, dashboardStats, toggleShift } = useApp();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const recentOrders = orders.slice(0, 3);
 
   const handleMenuPress = (label: string) => {
     switch (label) {
-      case 'Orders':
-        router.push('/orders');
-        break;
-      case 'Produksi':
-        router.push('/production');
-        break;
-      case 'Pengaturan':
-        router.push('/profile');
+      case 'Lainnya':
+        console.log('Open all menus');
         break;
       default:
         console.log('Menu pressed:', label);
     }
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.greenHeader}>
+          <SafeAreaView edges={['top']}>
+            <View style={styles.headerBarInner}>
+              <View style={styles.headerLeft}>
+                <View style={styles.logoMark}>
+                  <Droplets size={18} color={colors.white} />
+                </View>
+                <Text style={styles.brandName}>AtourWash</Text>
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
+        <HomeSkeletonLoader />
+      </View>
+    );
+  }
+
   return (
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.headerBar}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoMark}>
-            <Droplets size={18} color={colors.white} />
+    <View style={styles.container}>
+      <View style={styles.greenHeader}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.headerBarInner}>
+            <View style={styles.headerLeft}>
+              <View style={styles.logoMark}>
+                <Droplets size={18} color={colors.white} />
+              </View>
+              <Text style={styles.brandName}>AtourWash</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.headerIconBtn}>
+                <Bell size={20} color={colors.white} />
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.brandName}>AtourWash</Text>
-        </View>
-        <View style={styles.badgePill}>
-          <View style={styles.badgeDot} />
-          <Text style={styles.badgeText}>Laundry POS</Text>
-        </View>
+
+          <View style={styles.occupancyCard}>
+            <View style={styles.occupancyTop}>
+              <View style={styles.badgePill}>
+                <View style={styles.badgeDot} />
+                <Text style={styles.badgeText}>Laundry POS</Text>
+              </View>
+            </View>
+            <View style={styles.occupancyRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.occupancyLabel}>Omzet Hari Ini</Text>
+                <Text style={styles.occupancyValue}>{formatCurrency(dashboardStats.todayRevenue)}</Text>
+              </View>
+              <View style={styles.changeChip}>
+                <TrendingUp size={12} color={colors.white} />
+                <Text style={styles.changeText}>+{dashboardStats.revenueChange}%</Text>
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
       </View>
 
-      <ShiftBanner
-        isActive={shiftInfo.isActive}
-        startTime={shiftInfo.startTime}
-        onToggle={toggleShift}
-      />
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <ShiftBanner
+          isActive={shiftInfo.isActive}
+          startTime={shiftInfo.startTime}
+          onToggle={toggleShift}
+        />
 
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <View style={[styles.statIconBox, { backgroundColor: colors.primaryBg }]}>
-            <Wallet size={18} color={colors.primary} />
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <View style={[styles.statIconBox, { backgroundColor: colors.infoBg }]}>
+              <ClipboardList size={18} color={colors.info} />
+            </View>
+            <Text style={styles.statValue}>{dashboardStats.activeOrders}</Text>
+            <Text style={styles.statLabel}>Order Aktif</Text>
           </View>
-          <Text style={styles.statValue}>{formatCurrency(dashboardStats.todayRevenue)}</Text>
-          <Text style={styles.statLabel}>Omzet Hari Ini</Text>
-          <Text style={styles.statChange}>+{dashboardStats.revenueChange}%</Text>
-        </View>
-        <View style={styles.statCard}>
-          <View style={[styles.statIconBox, { backgroundColor: colors.infoBg }]}>
-            <ClipboardList size={18} color={colors.info} />
+          <View style={styles.statCard}>
+            <View style={[styles.statIconBox, { backgroundColor: colors.errorBg }]}>
+              <AlertTriangle size={18} color={colors.error} />
+            </View>
+            <Text style={styles.statValue}>{dashboardStats.overdueOrders}</Text>
+            <Text style={styles.statLabel}>Overdue</Text>
           </View>
-          <Text style={styles.statValue}>{dashboardStats.activeOrders}</Text>
-          <Text style={styles.statLabel}>Order Aktif</Text>
+          <View style={styles.statCard}>
+            <View style={[styles.statIconBox, { backgroundColor: colors.successBg }]}>
+              <TrendingUp size={18} color={colors.success} />
+            </View>
+            <Text style={styles.statValue}>{dashboardStats.completedOrders}</Text>
+            <Text style={styles.statLabel}>Selesai</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <View style={[styles.statIconBox, { backgroundColor: colors.errorBg }]}>
-            <AlertTriangle size={18} color={colors.error} />
-          </View>
-          <Text style={styles.statValue}>{dashboardStats.overdueOrders}</Text>
-          <Text style={styles.statLabel}>Overdue</Text>
-        </View>
-        <View style={styles.statCard}>
-          <View style={[styles.statIconBox, { backgroundColor: colors.successBg }]}>
-            <TrendingUp size={18} color={colors.success} />
-          </View>
-          <Text style={styles.statValue}>{dashboardStats.completedOrders}</Text>
-          <Text style={styles.statLabel}>Selesai</Text>
-        </View>
-      </View>
-
-      <View style={styles.menuSection}>
-        <Text style={styles.sectionTitle}>Menu</Text>
-        <View style={styles.menuCard}>
-          <View style={styles.menuGrid}>
-            {menuItems.map((item) => (
-              <TouchableOpacity 
-                key={item.label} 
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>Menu</Text>
+          <View style={styles.menuCard}>
+            <View style={styles.menuGrid}>
+              {favoriteMenuItems.map((item) => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={styles.menuItem}
+                  onPress={() => handleMenuPress(item.label)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconBox, { backgroundColor: item.bgColor }]}>
+                    <item.icon size={22} color={item.color} />
+                  </View>
+                  <Text style={styles.menuLabel} numberOfLines={1}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => handleMenuPress(item.label)}
+                onPress={() => handleMenuPress('Lainnya')}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuIconBox, { backgroundColor: item.bgColor }]}>
-                  <item.icon size={22} color={item.color} />
+                <View style={[styles.menuIconBox, { backgroundColor: lainnyaItem.bgColor }]}>
+                  <lainnyaItem.icon size={22} color={lainnyaItem.color} />
                 </View>
-                <Text style={styles.menuLabel} numberOfLines={1}>{item.label}</Text>
+                <Text style={styles.menuLabel} numberOfLines={1}>{lainnyaItem.label}</Text>
               </TouchableOpacity>
-            ))}
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.recentSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Order Terbaru</Text>
-          <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push('/orders')}>
-            <Text style={styles.seeAll}>Lihat Semua</Text>
-            <ChevronRight size={16} color={colors.primary} />
-          </TouchableOpacity>
+        <View style={styles.recentSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Order Terbaru</Text>
+            <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push('/orders')}>
+              <Text style={styles.seeAll}>Lihat Semua</Text>
+              <ChevronRight size={16} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          {recentOrders.map(order => (
+            <OrderCard key={order.id} order={order} />
+          ))}
         </View>
-
-        {recentOrders.map(order => (
-          <OrderCard key={order.id} order={order} />
-        ))}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -145,15 +190,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    padding: 20,
-    paddingBottom: 100,
+  greenHeader: {
+    backgroundColor: colors.primary,
+    paddingBottom: 0,
   },
-  headerBar: {
+  headerBarInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -164,39 +211,100 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   brandName: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: colors.primary,
+    color: colors.white,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  occupancyCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    padding: 16,
+  },
+  occupancyTop: {
+    marginBottom: 10,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primaryBg,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 20,
     gap: 6,
+    alignSelf: 'flex-start' as const,
   },
   badgeDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: colors.primary,
+    backgroundColor: '#4ADE80',
   },
   badgeText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: colors.primary,
+    color: colors.white,
+  },
+  occupancyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  occupancyLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 2,
+  },
+  occupancyValue: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: colors.white,
+  },
+  changeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  changeText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.white,
+  },
+  scrollArea: {
+    flex: 1,
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 100,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: 12,
+    marginTop: 16,
   },
   statCard: {
     flex: 1,
@@ -224,14 +332,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  statChange: {
     fontSize: 11,
-    fontWeight: '600' as const,
-    color: colors.success,
-    marginTop: 4,
+    color: colors.textSecondary,
   },
   menuSection: {
     marginTop: 8,

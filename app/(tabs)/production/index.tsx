@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,6 +6,7 @@ import { User, ChevronRight } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { ProductionStatus } from '@/types';
+import { ProductionSkeletonLoader } from '@/components/Skeleton';
 
 type FilterType = 'semua' | ProductionStatus;
 
@@ -23,6 +24,12 @@ export default function ProductionScreen() {
   const router = useRouter();
   const [activeFilterIndex, setActiveFilterIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const getOrdersForFilter = (filter: FilterType) => {
     const filtered = orders.filter(order => order.status !== 'selesai');
@@ -118,6 +125,14 @@ export default function ProductionScreen() {
       </TouchableOpacity>
     );
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ProductionSkeletonLoader />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

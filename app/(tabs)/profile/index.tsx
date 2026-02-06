@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Clock, LogOut, Bell, Settings, HelpCircle, ChevronRight, Shield, CreditCard, MessageCircle, Star, FileText, Info, Crown, Store, Calendar, ArrowUpCircle } from 'lucide-react-native';
@@ -6,10 +6,17 @@ import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/utils/format';
+import { ProfileSkeletonLoader } from '@/components/Skeleton';
 
 export default function ProfileScreen() {
   const { user, shiftInfo, toggleShift } = useApp();
   const { logout, user: authUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogout = () => {
     Alert.alert(
@@ -46,6 +53,14 @@ export default function ProfileScreen() {
     { icon: FileText, label: 'Syarat & Ketentuan' },
     { icon: Info, label: 'Tentang Aplikasi' },
   ];
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ProfileSkeletonLoader />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
