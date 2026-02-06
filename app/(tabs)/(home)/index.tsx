@@ -11,11 +11,11 @@ import { OrderCard } from '@/components/OrderCard';
 import { HomeSkeletonLoader } from '@/components/Skeleton';
 
 const favoriteMenuItems = [
-  { icon: Users, label: 'Pelanggan', color: '#3B82F6', bgColor: '#EFF6FF' },
-  { icon: Building2, label: 'Cabang', color: '#8B5CF6', bgColor: '#F5F3FF' },
-  { icon: Wallet, label: 'Keuangan', color: '#23A174', bgColor: '#ECFDF5' },
-  { icon: Package, label: 'Inventaris', color: '#F59E0B', bgColor: '#FFFBEB' },
-  { icon: FileText, label: 'Laporan', color: '#EC4899', bgColor: '#FDF2F8' },
+  { icon: Users, label: 'Pelanggan', color: '#3B82F6', bgColor: '#EFF6FF', route: '/pelanggan' },
+  { icon: Building2, label: 'Cabang', color: '#8B5CF6', bgColor: '#F5F3FF', route: '/cabang' },
+  { icon: Wallet, label: 'Keuangan', color: '#23A174', bgColor: '#ECFDF5', route: '/keuangan' },
+  { icon: Package, label: 'Inventaris', color: '#F59E0B', bgColor: '#FFFBEB', route: '/inventaris' },
+  { icon: FileText, label: 'Laporan', color: '#EC4899', bgColor: '#FDF2F8', route: '/laporan' },
 ];
 
 const lainnyaItem = { icon: Grid3x3, label: 'Lainnya', color: '#64748B', bgColor: '#F1F5F9' };
@@ -32,13 +32,11 @@ export default function HomeScreen() {
 
   const recentOrders = orders.slice(0, 3);
 
-  const handleMenuPress = (label: string) => {
-    switch (label) {
-      case 'Lainnya':
-        console.log('Open all menus');
-        break;
-      default:
-        console.log('Menu pressed:', label);
+  const handleMenuPress = (item: { label: string; route?: string }) => {
+    if (item.route) {
+      router.push(item.route as any);
+    } else if (item.label === 'Lainnya') {
+      router.push('/lainnya' as any);
     }
   };
 
@@ -144,7 +142,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={item.label}
                   style={styles.menuItem}
-                  onPress={() => handleMenuPress(item.label)}
+                  onPress={() => handleMenuPress(item)}
                   activeOpacity={0.7}
                 >
                   <View style={[styles.menuIconBox, { backgroundColor: item.bgColor }]}>
@@ -155,7 +153,7 @@ export default function HomeScreen() {
               ))}
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => handleMenuPress('Lainnya')}
+                onPress={() => handleMenuPress({ label: 'Lainnya', route: '/lainnya' })}
                 activeOpacity={0.7}
               >
                 <View style={[styles.menuIconBox, { backgroundColor: lainnyaItem.bgColor }]}>

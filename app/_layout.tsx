@@ -89,6 +89,30 @@ function RootLayoutNav() {
           contentStyle: { backgroundColor: colors.background },
         }} 
       />
+      <Stack.Screen 
+        name="pelanggan" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="cabang" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="keuangan" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="inventaris" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="laporan" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="lainnya" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }
