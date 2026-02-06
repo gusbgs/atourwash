@@ -5,6 +5,9 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Users, Building2, Wallet, Package, FileText, Settings, HelpCircle, Bell, Shield, Truck, Tag, UserCog, Printer, MessageSquare } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 
+const MENU_COLOR = colors.primary;
+const MENU_BG = colors.primaryBg;
+
 interface MenuItem {
   icon: typeof Users;
   label: string;
@@ -17,35 +20,35 @@ const menuGroups: { title: string; items: MenuItem[] }[] = [
   {
     title: 'Manajemen',
     items: [
-      { icon: Users, label: 'Pelanggan', color: '#3B82F6', bgColor: '#EFF6FF', route: '/pelanggan' },
-      { icon: Building2, label: 'Cabang', color: '#8B5CF6', bgColor: '#F5F3FF', route: '/cabang' },
-      { icon: UserCog, label: 'Karyawan', color: '#EC4899', bgColor: '#FDF2F8' },
-      { icon: Truck, label: 'Kurir', color: '#F97316', bgColor: '#FFF7ED' },
+      { icon: Users, label: 'Pelanggan', color: MENU_COLOR, bgColor: MENU_BG, route: '/pelanggan' },
+      { icon: Building2, label: 'Cabang', color: MENU_COLOR, bgColor: MENU_BG, route: '/cabang' },
+      { icon: UserCog, label: 'Karyawan', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: Truck, label: 'Kurir', color: MENU_COLOR, bgColor: MENU_BG },
     ],
   },
   {
     title: 'Keuangan & Laporan',
     items: [
-      { icon: Wallet, label: 'Keuangan', color: '#23A174', bgColor: '#ECFDF5', route: '/keuangan' },
-      { icon: FileText, label: 'Laporan', color: '#EC4899', bgColor: '#FDF2F8', route: '/laporan' },
-      { icon: Tag, label: 'Promo', color: '#F59E0B', bgColor: '#FFFBEB' },
+      { icon: Wallet, label: 'Keuangan', color: MENU_COLOR, bgColor: MENU_BG, route: '/keuangan' },
+      { icon: FileText, label: 'Laporan', color: MENU_COLOR, bgColor: MENU_BG, route: '/laporan' },
+      { icon: Tag, label: 'Promo', color: MENU_COLOR, bgColor: MENU_BG },
     ],
   },
   {
     title: 'Operasional',
     items: [
-      { icon: Package, label: 'Inventaris', color: '#F59E0B', bgColor: '#FFFBEB', route: '/inventaris' },
-      { icon: Printer, label: 'Cetak Struk', color: '#64748B', bgColor: '#F1F5F9' },
-      { icon: MessageSquare, label: 'Feedback', color: '#06B6D4', bgColor: '#ECFEFF' },
+      { icon: Package, label: 'Inventaris', color: MENU_COLOR, bgColor: MENU_BG, route: '/inventaris' },
+      { icon: Printer, label: 'Cetak Struk', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: MessageSquare, label: 'Feedback', color: MENU_COLOR, bgColor: MENU_BG },
     ],
   },
   {
     title: 'Pengaturan',
     items: [
-      { icon: Settings, label: 'Pengaturan', color: '#64748B', bgColor: '#F1F5F9' },
-      { icon: Bell, label: 'Notifikasi', color: '#3B82F6', bgColor: '#EFF6FF' },
-      { icon: Shield, label: 'Keamanan', color: '#EF4444', bgColor: '#FEF2F2' },
-      { icon: HelpCircle, label: 'Bantuan', color: '#8B5CF6', bgColor: '#F5F3FF' },
+      { icon: Settings, label: 'Pengaturan', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: Bell, label: 'Notifikasi', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: Shield, label: 'Keamanan', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: HelpCircle, label: 'Bantuan', color: MENU_COLOR, bgColor: MENU_BG },
     ],
   },
 ];

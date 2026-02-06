@@ -10,15 +10,18 @@ import { ShiftBanner } from '@/components/ShiftBanner';
 import { OrderCard } from '@/components/OrderCard';
 import { HomeSkeletonLoader } from '@/components/Skeleton';
 
+const MENU_COLOR = colors.primary;
+const MENU_BG = colors.primaryBg;
+
 const favoriteMenuItems = [
-  { icon: Users, label: 'Pelanggan', color: '#3B82F6', bgColor: '#EFF6FF', route: '/pelanggan' },
-  { icon: Building2, label: 'Cabang', color: '#8B5CF6', bgColor: '#F5F3FF', route: '/cabang' },
-  { icon: Wallet, label: 'Keuangan', color: '#23A174', bgColor: '#ECFDF5', route: '/keuangan' },
-  { icon: Package, label: 'Inventaris', color: '#F59E0B', bgColor: '#FFFBEB', route: '/inventaris' },
-  { icon: FileText, label: 'Laporan', color: '#EC4899', bgColor: '#FDF2F8', route: '/laporan' },
+  { icon: Users, label: 'Pelanggan', color: MENU_COLOR, bgColor: MENU_BG, route: '/pelanggan' },
+  { icon: Building2, label: 'Cabang', color: MENU_COLOR, bgColor: MENU_BG, route: '/cabang' },
+  { icon: Wallet, label: 'Keuangan', color: MENU_COLOR, bgColor: MENU_BG, route: '/keuangan' },
+  { icon: Package, label: 'Inventaris', color: MENU_COLOR, bgColor: MENU_BG, route: '/inventaris' },
+  { icon: FileText, label: 'Laporan', color: MENU_COLOR, bgColor: MENU_BG, route: '/laporan' },
 ];
 
-const lainnyaItem = { icon: Grid3x3, label: 'Lainnya', color: '#64748B', bgColor: '#F1F5F9' };
+const lainnyaItem = { icon: Grid3x3, label: 'Lainnya', color: MENU_COLOR, bgColor: MENU_BG };
 
 export default function HomeScreen() {
   const router = useRouter();
