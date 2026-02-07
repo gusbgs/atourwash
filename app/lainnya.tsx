@@ -22,7 +22,7 @@ const menuGroups: { title: string; items: MenuItem[] }[] = [
     items: [
       { icon: Users, label: 'Pelanggan', color: MENU_COLOR, bgColor: MENU_BG, route: '/pelanggan' },
       { icon: Building2, label: 'Cabang', color: MENU_COLOR, bgColor: MENU_BG, route: '/cabang' },
-      { icon: UserCog, label: 'Karyawan', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: UserCog, label: 'Karyawan', color: MENU_COLOR, bgColor: MENU_BG, route: '/karyawan' },
       { icon: Truck, label: 'Kurir', color: MENU_COLOR, bgColor: MENU_BG },
     ],
   },
