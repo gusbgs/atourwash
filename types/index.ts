@@ -1,6 +1,6 @@
 export type OrderStatus = 'dalam_proses' | 'siap_diambil' | 'selesai' | 'terlambat';
 
-export type ProductionStatus = 'antrian' | 'dicuci' | 'disetrika' | 'selesai';
+export type ProductionStatus = 'antrian' | 'diproses' | 'siap_diambil' | 'selesai';
 
 export type PaymentStatus = 'belum_bayar' | 'dp' | 'lunas';
 
@@ -21,6 +21,7 @@ export interface Order {
   itemDetails?: string;
   notes?: string;
   estimatedDate: string;
+  fragrance?: string;
 }
 
 export interface Service {

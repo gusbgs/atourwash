@@ -5,7 +5,7 @@ import { useRouter, Stack } from 'expo-router';
 import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
-import { mockKiloanServices, mockSatuanItems } from '@/mocks/data';
+import { mockKiloanServices, mockSatuanItems, mockFragrances } from '@/mocks/data';
 import { formatFullCurrency } from '@/utils/format';
 import { Order } from '@/types';
 
@@ -72,6 +72,8 @@ export default function NewOrderScreen() {
     setShowNameSuggestions(false);
     setShowPhoneSuggestions(false);
   }, []);
+
+  const [selectedFragrance, setSelectedFragrance] = useState('f1');
 
   const [showKiloan, setShowKiloan] = useState(true);
   const [showSatuan, setShowSatuan] = useState(false);
@@ -211,6 +213,8 @@ export default function NewOrderScreen() {
 
     const finalTotal = kiloanTotal + satuanTotal;
 
+    const chosenFrag = mockFragrances.find(f => f.id === selectedFragrance);
+
     const newOrder: Order = {
       id: `ORD-${String(orders.length + 1).padStart(3, '0')}`,
       customerName: customerName.trim(),
@@ -227,6 +231,7 @@ export default function NewOrderScreen() {
       productionStatus: 'antrian',
       itemDetails: parts.join(', '),
       estimatedDate: estimatedDate.toISOString().split('T')[0],
+      fragrance: chosenFrag?.name,
     };
 
     addOrder(newOrder);
@@ -489,6 +494,40 @@ export default function NewOrderScreen() {
             </View>
           )}
 
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={{ fontSize: 18 }}>🧴</Text>
+              <Text style={styles.sectionTitle}>Pengharum</Text>
+            </View>
+            <View style={styles.fragranceGrid}>
+              {mockFragrances.map(frag => {
+                const selected = selectedFragrance === frag.id;
+                return (
+                  <TouchableOpacity
+                    key={frag.id}
+                    style={[
+                      styles.fragranceChip,
+                      selected && { borderColor: frag.color, backgroundColor: frag.color + '15' },
+                    ]}
+                    onPress={() => setSelectedFragrance(frag.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.fragranceIcon}>{frag.icon}</Text>
+                    <Text style={[
+                      styles.fragranceName,
+                      selected && { color: colors.text, fontWeight: '600' as const },
+                    ]}>{frag.name}</Text>
+                    {selected && (
+                      <View style={[styles.fragranceCheck, { backgroundColor: frag.color }]}>
+                        <Check size={10} color={colors.white} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           <View style={{ height: 20 }} />
         </ScrollView>
 
@@ -543,6 +582,16 @@ export default function NewOrderScreen() {
                     <Text style={styles.confirmItemPrice}>{formatFullCurrency(item.subtotal)}</Text>
                   </View>
                 ))}
+              </View>
+
+              <View style={styles.confirmDivider} />
+
+              <View style={styles.confirmSection}>
+                <Text style={styles.confirmLabel}>Pengharum</Text>
+                <Text style={styles.confirmValue}>
+                  {mockFragrances.find(f => f.id === selectedFragrance)?.icon}{' '}
+                  {mockFragrances.find(f => f.id === selectedFragrance)?.name}
+                </Text>
               </View>
 
               <View style={styles.confirmDivider} />
@@ -1085,5 +1134,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: colors.white,
+  },
+  fragranceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  fragranceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  fragranceIcon: {
+    fontSize: 16,
+  },
+  fragranceName: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  fragranceCheck: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

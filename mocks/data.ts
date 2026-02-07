@@ -38,6 +38,15 @@ export const mockKiloanServices: Service[] = [
   { id: 'k4', name: 'Setrika Saja', duration: '1 hari', pricePerUnit: 5000, unit: 'kg' },
 ];
 
+export const mockFragrances = [
+  { id: 'f1', name: 'Lavender', icon: '💜', color: '#A78BFA' },
+  { id: 'f2', name: 'Ocean Breeze', icon: '🌊', color: '#38BDF8' },
+  { id: 'f3', name: 'Rose', icon: '🌹', color: '#FB7185' },
+  { id: 'f4', name: 'Fresh Lemon', icon: '🍋', color: '#FACC15' },
+  { id: 'f5', name: 'Sakura', icon: '🌸', color: '#F9A8D4' },
+  { id: 'f6', name: 'Tanpa Pengharum', icon: '🚫', color: '#94A3B8' },
+];
+
 export const mockSatuanItems = [
   { id: 's1', name: 'Kemeja', price: 8000, icon: '👔' },
   { id: 's2', name: 'Celana', price: 8000, icon: '👖' },
@@ -67,7 +76,7 @@ export const mockOrders: Order[] = [
     paidAmount: 10000,
     paymentStatus: 'dp',
     createdAt: '2024-01-15T08:00:00Z',
-    productionStatus: 'dicuci',
+    productionStatus: 'diproses',
     itemDetails: '3 kemeja, 2 celana',
     notes: 'Pisahkan warna gelap dan terang',
     estimatedDate: '2024-01-17',
@@ -120,7 +129,7 @@ export const mockOrders: Order[] = [
     paidAmount: 21700,
     paymentStatus: 'lunas',
     createdAt: '2024-01-15T09:30:00Z',
-    productionStatus: 'disetrika',
+    productionStatus: 'siap_diambil',
     itemDetails: '4 blouse, 1 rok',
     estimatedDate: '2024-01-17',
   },

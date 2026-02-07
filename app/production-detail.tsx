@@ -23,9 +23,9 @@ interface TimelineStep {
 
 const timelineSteps: TimelineStep[] = [
   { id: 'antrian', label: 'Antrian', description: 'Cucian masuk antrian' },
-  { id: 'dicuci', label: 'Dicuci', description: 'Proses pencucian' },
-  { id: 'disetrika', label: 'Disetrika', description: 'Proses penyetrikaan' },
-  { id: 'selesai', label: 'Selesai', description: 'Siap diambil pelanggan' },
+  { id: 'diproses', label: 'Diproses', description: 'Sedang dicuci & disetrika' },
+  { id: 'siap_diambil', label: 'Siap Diambil', description: 'Siap diambil pelanggan' },
+  { id: 'selesai', label: 'Selesai', description: 'Pesanan selesai' },
 ];
 
 const getStepIndex = (status: ProductionStatus): number => {
@@ -65,11 +65,11 @@ export default function ProductionDetailScreen() {
   const getNextAction = () => {
     switch (order.productionStatus) {
       case 'antrian':
-        return { label: 'Mulai Cuci', nextStatus: 'dicuci' as ProductionStatus };
-      case 'dicuci':
-        return { label: 'Selesai Cuci', nextStatus: 'disetrika' as ProductionStatus };
-      case 'disetrika':
-        return { label: 'Selesai Setrika', nextStatus: 'selesai' as ProductionStatus };
+        return { label: 'Mulai Proses', nextStatus: 'diproses' as ProductionStatus };
+      case 'diproses':
+        return { label: 'Siap Diambil', nextStatus: 'siap_diambil' as ProductionStatus };
+      case 'siap_diambil':
+        return { label: 'Selesai', nextStatus: 'selesai' as ProductionStatus };
       default:
         return null;
     }
