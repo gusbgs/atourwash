@@ -127,6 +127,10 @@ function RootLayoutNav() {
         name="karyawan" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="customer-detail" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

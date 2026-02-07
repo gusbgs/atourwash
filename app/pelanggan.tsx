@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, Users, Phone, MapPin, Plus, X, Trash2, Pencil } from 'lucide-react-native';
+import { ArrowLeft, Search, Users, Phone, MapPin, Plus, X } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/constants/colors';
 
@@ -34,8 +34,7 @@ export default function PelangganScreen() {
   const [formName, setFormName] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formAddress, setFormAddress] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [detailVisible, setDetailVisible] = useState(false);
+
 
   useEffect(() => {
     const load = async () => {
@@ -66,15 +65,6 @@ export default function PelangganScreen() {
     setModalVisible(true);
   }, []);
 
-  const openEdit = useCallback((c: Customer) => {
-    setEditingCustomer(c);
-    setFormName(c.name);
-    setFormPhone(c.phone);
-    setFormAddress(c.address);
-    setDetailVisible(false);
-    setModalVisible(true);
-  }, []);
-
   const handleSave = useCallback(() => {
     if (!formName.trim() || !formPhone.trim()) {
       Alert.alert('Error', 'Nama dan nomor telepon wajib diisi');
@@ -98,25 +88,13 @@ export default function PelangganScreen() {
     setModalVisible(false);
   }, [formName, formPhone, formAddress, editingCustomer, customers, persist]);
 
-  const handleDelete = useCallback((c: Customer) => {
-    Alert.alert('Hapus Pelanggan', `Yakin ingin menghapus ${c.name}?`, [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Hapus', style: 'destructive', onPress: () => {
-          persist(customers.filter(x => x.id !== c.id));
-          setDetailVisible(false);
-        }
-      },
-    ]);
-  }, [customers, persist]);
-
   const filtered = customers.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.includes(search)
   );
 
   const renderCustomer = ({ item }: { item: Customer }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { setSelectedCustomer(item); setDetailVisible(true); }}>
+    <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => router.push({ pathname: '/customer-detail', params: { id: item.id } })}>
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
       </View>
@@ -201,48 +179,6 @@ export default function PelangganScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      <Modal visible={detailVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {selectedCustomer && (
-              <>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Detail Pelanggan</Text>
-                  <TouchableOpacity onPress={() => setDetailVisible(false)}><X size={22} color={colors.text} /></TouchableOpacity>
-                </View>
-                <View style={styles.detailBody}>
-                  <View style={styles.detailAvatar}>
-                    <Text style={styles.detailAvatarText}>{selectedCustomer.name.charAt(0)}</Text>
-                  </View>
-                  <Text style={styles.detailName}>{selectedCustomer.name}</Text>
-                  <View style={styles.detailRow}>
-                    <Phone size={16} color={colors.textSecondary} />
-                    <Text style={styles.detailValue}>{selectedCustomer.phone}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <MapPin size={16} color={colors.textSecondary} />
-                    <Text style={styles.detailValue}>{selectedCustomer.address || '-'}</Text>
-                  </View>
-                  <View style={styles.detailStat}>
-                    <Text style={styles.detailStatNum}>{selectedCustomer.totalOrders}</Text>
-                    <Text style={styles.detailStatLabel}>Total Order</Text>
-                  </View>
-                </View>
-                <View style={styles.detailActions}>
-                  <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(selectedCustomer)} activeOpacity={0.8}>
-                    <Pencil size={16} color={colors.white} />
-                    <Text style={styles.editBtnText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(selectedCustomer)} activeOpacity={0.8}>
-                    <Trash2 size={16} color={colors.white} />
-                    <Text style={styles.deleteBtnText}>Hapus</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -278,18 +214,5 @@ const styles = StyleSheet.create({
   input: { backgroundColor: colors.background, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: colors.text, borderWidth: 1, borderColor: colors.border },
   saveBtn: { backgroundColor: colors.primary, marginHorizontal: 20, marginVertical: 16, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
   saveBtnText: { fontSize: 15, fontWeight: '700' as const, color: colors.white },
-  detailBody: { alignItems: 'center', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8 },
-  detailAvatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primaryBg, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  detailAvatarText: { fontSize: 28, fontWeight: '700' as const, color: colors.primary },
-  detailName: { fontSize: 20, fontWeight: '700' as const, color: colors.text, marginBottom: 16 },
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10, width: '100%', paddingHorizontal: 20 },
-  detailValue: { fontSize: 14, color: colors.text, flex: 1 },
-  detailStat: { alignItems: 'center', marginTop: 20, backgroundColor: colors.primaryBg, borderRadius: 14, paddingHorizontal: 30, paddingVertical: 14 },
-  detailStatNum: { fontSize: 28, fontWeight: '800' as const, color: colors.primary },
-  detailStatLabel: { fontSize: 12, color: colors.primary, marginTop: 2 },
-  detailActions: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 16 },
-  editBtn: { flex: 1, flexDirection: 'row', gap: 8, backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, justifyContent: 'center', alignItems: 'center' },
-  editBtnText: { fontSize: 15, fontWeight: '600' as const, color: colors.white },
-  deleteBtn: { flex: 1, flexDirection: 'row', gap: 8, backgroundColor: colors.error, borderRadius: 14, paddingVertical: 14, justifyContent: 'center', alignItems: 'center' },
-  deleteBtnText: { fontSize: 15, fontWeight: '600' as const, color: colors.white },
+
 });
