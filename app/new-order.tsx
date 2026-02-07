@@ -2,12 +2,17 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Layers } from 'lucide-react-native';
+import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Layers, Search, X } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { mockKiloanServices, mockSatuanItems } from '@/mocks/data';
 import { formatFullCurrency } from '@/utils/format';
 import { Order } from '@/types';
+
+interface CustomerSuggestion {
+  name: string;
+  phone: string;
+}
 
 type LaundryMode = 'kiloan' | 'satuan' | 'kombinasi';
 
@@ -25,6 +30,37 @@ export default function NewOrderScreen() {
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [showPhoneSuggestions, setShowPhoneSuggestions] = useState(false);
+
+  const existingCustomers = useMemo(() => {
+    const map = new Map<string, CustomerSuggestion>();
+    orders.forEach(o => {
+      const key = `${o.customerName}-${o.customerPhone}`;
+      if (!map.has(key)) {
+        map.set(key, { name: o.customerName, phone: o.customerPhone || '' });
+      }
+    });
+    return Array.from(map.values());
+  }, [orders]);
+
+  const nameSuggestions = useMemo(() => {
+    if (!customerName.trim()) return existingCustomers;
+    const q = customerName.toLowerCase();
+    return existingCustomers.filter(c => c.name.toLowerCase().includes(q));
+  }, [customerName, existingCustomers]);
+
+  const phoneSuggestions = useMemo(() => {
+    if (!customerPhone.trim()) return existingCustomers;
+    return existingCustomers.filter(c => c.phone.includes(customerPhone));
+  }, [customerPhone, existingCustomers]);
+
+  const selectCustomer = useCallback((c: CustomerSuggestion) => {
+    setCustomerName(c.name);
+    setCustomerPhone(c.phone);
+    setShowNameSuggestions(false);
+    setShowPhoneSuggestions(false);
+  }, []);
   const [mode, setMode] = useState<LaundryMode>('kiloan');
   const [selectedKiloanId, setSelectedKiloanId] = useState<string | null>(null);
   const [weight, setWeight] = useState('');
@@ -62,7 +98,8 @@ export default function NewOrderScreen() {
 
   const kiloanTotal = useMemo(() => {
     if (!selectedKiloan || !weight) return 0;
-    return selectedKiloan.pricePerUnit * (parseFloat(weight) || 0);
+    const w = parseFloat(weight) || 0;
+    return Math.round(selectedKiloan.pricePerUnit * w);
   }, [selectedKiloan, weight]);
 
   const satuanTotal = useMemo(
@@ -160,8 +197,8 @@ export default function NewOrderScreen() {
             <ArrowLeft size={22} color={colors.white} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Order Baru</Text>
-            <Text style={styles.subtitle}>Buat transaksi baru</Text>
+            <Text style={styles.title}>Buat Pesanan</Text>
+            <Text style={styles.subtitle}>Buat pesanan baru</Text>
           </View>
         </View>
 
@@ -177,23 +214,61 @@ export default function NewOrderScreen() {
               <Text style={styles.sectionTitle}>Pelanggan</Text>
             </View>
             <View style={styles.inputGroup}>
-              <TextInput
-                style={styles.input}
-                placeholder="Nama pelanggan"
-                placeholderTextColor={colors.textTertiary}
-                value={customerName}
-                onChangeText={setCustomerName}
-              />
+              <View style={styles.searchInputRow}>
+                <Search size={16} color={colors.textTertiary} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Cari / ketik nama pelanggan"
+                  placeholderTextColor={colors.textTertiary}
+                  value={customerName}
+                  onChangeText={(t) => { setCustomerName(t); setShowNameSuggestions(true); setShowPhoneSuggestions(false); }}
+                  onFocus={() => { setShowNameSuggestions(true); setShowPhoneSuggestions(false); }}
+                />
+                {customerName.length > 0 && (
+                  <TouchableOpacity onPress={() => { setCustomerName(''); setCustomerPhone(''); setShowNameSuggestions(false); }}>
+                    <X size={16} color={colors.textTertiary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {showNameSuggestions && nameSuggestions.length > 0 && (
+                <View style={styles.suggestionsBox}>
+                  {nameSuggestions.slice(0, 5).map((c, i) => (
+                    <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => selectCustomer(c)}>
+                      <Text style={styles.suggestionName}>{c.name}</Text>
+                      {c.phone ? <Text style={styles.suggestionPhone}>{c.phone}</Text> : null}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
             <View style={styles.inputGroup}>
-              <TextInput
-                style={styles.input}
-                placeholder="No. Telepon (opsional)"
-                placeholderTextColor={colors.textTertiary}
-                value={customerPhone}
-                onChangeText={setCustomerPhone}
-                keyboardType="phone-pad"
-              />
+              <View style={styles.searchInputRow}>
+                <Search size={16} color={colors.textTertiary} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Cari / ketik no. telepon"
+                  placeholderTextColor={colors.textTertiary}
+                  value={customerPhone}
+                  onChangeText={(t) => { setCustomerPhone(t); setShowPhoneSuggestions(true); setShowNameSuggestions(false); }}
+                  onFocus={() => { setShowPhoneSuggestions(true); setShowNameSuggestions(false); }}
+                  keyboardType="phone-pad"
+                />
+                {customerPhone.length > 0 && (
+                  <TouchableOpacity onPress={() => { setCustomerPhone(''); setShowPhoneSuggestions(false); }}>
+                    <X size={16} color={colors.textTertiary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {showPhoneSuggestions && phoneSuggestions.length > 0 && (
+                <View style={styles.suggestionsBox}>
+                  {phoneSuggestions.slice(0, 5).map((c, i) => (
+                    <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => selectCustomer(c)}>
+                      <Text style={styles.suggestionName}>{c.name}</Text>
+                      {c.phone ? <Text style={styles.suggestionPhone}>{c.phone}</Text> : null}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
 
@@ -358,7 +433,7 @@ export default function NewOrderScreen() {
             disabled={!canSubmit}
             activeOpacity={0.8}
           >
-            <Text style={styles.submitButtonText}>Buat Order</Text>
+            <Text style={styles.submitButtonText}>Buat Pesanan</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -437,6 +512,48 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     fontSize: 15,
     color: colors.text,
+  },
+  searchInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: colors.text,
+  },
+  suggestionsBox: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  suggestionName: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: colors.text,
+  },
+  suggestionPhone: {
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   modeRow: {
     flexDirection: 'row',
