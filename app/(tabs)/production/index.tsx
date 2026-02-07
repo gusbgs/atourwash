@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable, LayoutChangeEvent } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { User, ChevronRight, Package } from 'lucide-react-native';
@@ -30,37 +30,13 @@ export default function ProductionScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FilterType>('semua');
   const [isLoading, setIsLoading] = useState(true);
-  const indicatorAnim = useRef(new Animated.Value(0)).current;
-  const tabWidths = useRef<number[]>([]);
-  const tabPositions = useRef<number[]>([]);
-  const [indicatorWidth, setIndicatorWidth] = useState(0);
+
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleTabLayout = useCallback((index: number, e: LayoutChangeEvent) => {
-    const { x, width } = e.nativeEvent.layout;
-    tabPositions.current[index] = x;
-    tabWidths.current[index] = width;
-    if (index === 0 && indicatorWidth === 0) {
-      setIndicatorWidth(width);
-    }
-  }, [indicatorWidth]);
-
-  const selectFilter = useCallback((key: FilterType, index: number) => {
-    setActiveFilter(key);
-    const targetX = tabPositions.current[index] ?? 0;
-    const targetW = tabWidths.current[index] ?? 80;
-    setIndicatorWidth(targetW);
-    Animated.spring(indicatorAnim, {
-      toValue: targetX,
-      useNativeDriver: true,
-      tension: 120,
-      friction: 14,
-    }).start();
-  }, [indicatorAnim]);
 
   const filteredOrders = orders.filter(order => {
     if (activeFilter === 'semua') return order.productionStatus !== 'selesai';
@@ -95,7 +71,6 @@ export default function ProductionScreen() {
     }
   };
 
-  const activeFilterLabel = filterOptions.find(f => f.key === activeFilter)?.label ?? 'Semua';
 
   if (isLoading) {
     return (
@@ -114,41 +89,29 @@ export default function ProductionScreen() {
         </View>
       </View>
 
-      <View style={styles.tabBar}>
-        <View style={styles.tabBarInner}>
-          <Animated.View
-            style={[
-              styles.tabIndicator,
-              {
-                width: indicatorWidth,
-                transform: [{ translateX: indicatorAnim }],
-              },
-            ]}
-          />
-          {filterOptions.map((f, index) => {
-            const isActive = activeFilter === f.key;
-            const count = getFilterCount(f.key);
-            return (
-              <TouchableOpacity
-                key={f.key}
-                style={styles.tab}
-                onPress={() => selectFilter(f.key, index)}
-                onLayout={(e) => handleTabLayout(index, e)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-                  {f.label}
-                </Text>
-                {count > 0 && (
-                  <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                    <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>{count}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
+        {filterOptions.map((f) => {
+          const isActive = activeFilter === f.key;
+          const count = getFilterCount(f.key);
+          return (
+            <TouchableOpacity
+              key={f.key}
+              style={[styles.tab, isActive && styles.tabActive]}
+              onPress={() => setActiveFilter(f.key)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                {f.label}
+              </Text>
+              {count > 0 && (
+                <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                  <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>{count}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
       <ScrollView
         contentContainerStyle={styles.ordersContent}
@@ -241,36 +204,23 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  tabBarInner: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceSecondary,
-    borderRadius: 12,
-    padding: 4,
-    position: 'relative' as const,
-  },
-  tabIndicator: {
-    position: 'absolute' as const,
-    top: 4,
-    left: 0,
-    height: 40,
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingBottom: 16,
+    gap: 8,
   },
   tab: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    height: 40,
-    borderRadius: 10,
-    gap: 5,
+    height: 36,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    gap: 6,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tabActive: {
+    backgroundColor: colors.text,
+    borderColor: colors.text,
   },
   tabText: {
     fontSize: 13,
@@ -279,11 +229,11 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     fontWeight: '600' as const,
-    color: colors.text,
+    color: colors.white,
   },
   tabBadge: {
     backgroundColor: colors.border,
-    borderRadius: 8,
+    borderRadius: 10,
     minWidth: 20,
     height: 20,
     alignItems: 'center',
@@ -291,7 +241,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   tabBadgeActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   tabBadgeText: {
     fontSize: 10,
