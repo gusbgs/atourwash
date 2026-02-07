@@ -78,14 +78,24 @@ function RootLayoutNav() {
       <Stack.Screen 
         name="order-detail" 
         options={{ 
-          headerShown: false,
+          headerShown: true,
+          title: 'Detail Pesanan',
+          headerStyle: { backgroundColor: colors.primary },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: '600' },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.background },
         }} 
       />
       <Stack.Screen 
         name="production-detail" 
         options={{ 
-          headerShown: false,
+          headerShown: true,
+          title: 'Progress Produksi',
+          headerStyle: { backgroundColor: colors.primary },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: '600' },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.background },
         }} 
       />

@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
-  ArrowLeft, 
   User, 
   Phone, 
   Package, 
@@ -25,12 +24,13 @@ export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { orders } = useApp();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const order = orders.find(o => o.id === id);
 
   if (!order) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.errorContainer}>
           <AlertCircle size={48} color={colors.error} />
           <Text style={styles.errorText}>Pesanan tidak ditemukan</Text>
@@ -38,7 +38,7 @@ export default function OrderDetailScreen() {
             <Text style={styles.backButtonText}>Kembali</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -56,19 +56,13 @@ export default function OrderDetailScreen() {
     <>
       <Stack.Screen 
         options={{ 
-          headerShown: false,
+          title: `${order.id} — ${order.serviceType}`,
         }} 
       />
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerBackButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>{order.id}</Text>
-            <Text style={styles.headerSubtitle}>{order.serviceType}</Text>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.statusBar}>
           <StatusBadge status={order.status} />
+          <PaymentBadge status={order.paymentStatus} />
         </View>
 
         <ScrollView 
@@ -217,7 +211,7 @@ export default function OrderDetailScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
           {order.paymentStatus !== 'lunas' && (
             <TouchableOpacity style={styles.payButton}>
               <CreditCard size={20} color={colors.white} />
@@ -231,7 +225,7 @@ export default function OrderDetailScreen() {
             </TouchableOpacity>
           )}
         </View>
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -241,36 +235,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    justifyContent: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-  },
-  headerBackButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: colors.text,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   content: {
     flex: 1,
@@ -399,7 +373,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    paddingBottom: 34,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
