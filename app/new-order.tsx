@@ -14,7 +14,7 @@ interface CustomerSuggestion {
   phone: string;
 }
 
-type LaundryMode = 'kiloan' | 'satuan';
+
 
 interface KiloanEntry {
   serviceId: string;
@@ -28,6 +28,11 @@ interface SatuanEntry {
   icon: string;
   qty: number;
 }
+
+const parseDecimal = (val: string): number => {
+  const normalized = val.replace(',', '.');
+  return parseFloat(normalized) || 0;
+};
 
 export default function NewOrderScreen() {
   const router = useRouter();
@@ -68,7 +73,8 @@ export default function NewOrderScreen() {
     setShowPhoneSuggestions(false);
   }, []);
 
-  const [mode, setMode] = useState<LaundryMode>('kiloan');
+  const [showKiloan, setShowKiloan] = useState(true);
+  const [showSatuan, setShowSatuan] = useState(false);
 
   const [kiloanEntries, setKiloanEntries] = useState<KiloanEntry[]>([]);
   const [satuanItems, setSatuanItems] = useState<SatuanEntry[]>(
@@ -95,7 +101,7 @@ export default function NewOrderScreen() {
     setKiloanEntries(prev =>
       prev.map(e => {
         if (e.serviceId !== serviceId) return e;
-        const v = parseFloat(e.weight) || 0;
+        const v = parseDecimal(e.weight);
         return { ...e, weight: String(Math.round((v + 0.5) * 10) / 10) };
       })
     );
@@ -105,7 +111,7 @@ export default function NewOrderScreen() {
     setKiloanEntries(prev =>
       prev.map(e => {
         if (e.serviceId !== serviceId) return e;
-        const v = parseFloat(e.weight) || 0;
+        const v = parseDecimal(e.weight);
         const next = Math.max(0, Math.round((v - 0.5) * 10) / 10);
         return { ...e, weight: next === 0 ? '' : String(next) };
       })
@@ -124,7 +130,7 @@ export default function NewOrderScreen() {
     return kiloanEntries.map(entry => {
       const svc = mockKiloanServices.find(s => s.id === entry.serviceId);
       if (!svc) return { ...entry, subtotal: 0, serviceName: '', pricePerUnit: 0 };
-      const w = parseFloat(entry.weight) || 0;
+      const w = parseDecimal(entry.weight);
       return { ...entry, subtotal: Math.round(svc.pricePerUnit * w), serviceName: svc.name, pricePerUnit: svc.pricePerUnit };
     });
   }, [kiloanEntries]);
@@ -136,11 +142,7 @@ export default function NewOrderScreen() {
     [satuanItems]
   );
 
-  const totalPrice = useMemo(() => {
-    if (mode === 'kiloan') return kiloanTotal;
-    if (mode === 'satuan') return satuanTotal;
-    return kiloanTotal + satuanTotal;
-  }, [mode, kiloanTotal, satuanTotal]);
+  const totalPrice = useMemo(() => kiloanTotal + satuanTotal, [kiloanTotal, satuanTotal]);
 
   const activeSatuanCount = useMemo(
     () => satuanItems.reduce((s, i) => s + i.qty, 0),
@@ -148,33 +150,16 @@ export default function NewOrderScreen() {
   );
 
   const activeKiloanEntries = useMemo(
-    () => kiloanEntries.filter(e => parseFloat(e.weight) > 0),
+    () => kiloanEntries.filter(e => parseDecimal(e.weight) > 0),
     [kiloanEntries]
   );
 
   const canSubmit = useMemo(() => {
     const hasCustomer = customerName.trim().length > 0;
-    if (mode === 'kiloan') return hasCustomer && activeKiloanEntries.length > 0;
-    if (mode === 'satuan') return hasCustomer && activeSatuanCount > 0;
     return hasCustomer && (activeKiloanEntries.length > 0 || activeSatuanCount > 0);
-  }, [customerName, mode, activeKiloanEntries, activeSatuanCount]);
+  }, [customerName, activeKiloanEntries, activeSatuanCount]);
 
-  const confirmationItems = useMemo(() => {
-    const items: { label: string; qty: string; subtotal: number }[] = [];
-    if (mode === 'kiloan' || mode === 'satuan') {
-      kiloanTotals.forEach(e => {
-        if (e.subtotal > 0) {
-          items.push({ label: e.serviceName, qty: `${e.weight} kg`, subtotal: e.subtotal });
-        }
-      });
-    }
-    if (mode === 'satuan' || mode === 'kiloan') {
-      satuanItems.filter(i => i.qty > 0).forEach(i => {
-        items.push({ label: i.name, qty: `${i.qty} item`, subtotal: i.price * i.qty });
-      });
-    }
-    return items;
-  }, [mode, kiloanTotals, satuanItems]);
+
 
   const allConfirmationItems = useMemo(() => {
     const items: { label: string; qty: string; subtotal: number }[] = [];
@@ -203,7 +188,7 @@ export default function NewOrderScreen() {
     activeKiloanEntries.forEach(entry => {
       const svc = mockKiloanServices.find(s => s.id === entry.serviceId);
       if (svc) {
-        const w = parseFloat(entry.weight) || 0;
+        const w = parseDecimal(entry.weight);
         totalW += w;
         parts.push(`${entry.weight} kg ${svc.name}`);
         if (!svcName) svcName = svc.name;
@@ -249,10 +234,7 @@ export default function NewOrderScreen() {
     router.back();
   };
 
-  const modeOptions: { key: LaundryMode; label: string; icon: React.ReactNode }[] = [
-    { key: 'kiloan', label: 'Kiloan', icon: <Weight size={16} color={mode === 'kiloan' ? colors.white : colors.textSecondary} /> },
-    { key: 'satuan', label: 'Satuan', icon: <ShoppingBag size={16} color={mode === 'satuan' ? colors.white : colors.textSecondary} /> },
-  ];
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -344,27 +326,30 @@ export default function NewOrderScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Tipe Laundry</Text>
+            <Text style={styles.sectionHint}>Aktifkan tipe yang dibutuhkan</Text>
             <View style={styles.modeRow}>
-              {modeOptions.map(opt => {
-                const active = mode === opt.key;
-                return (
-                  <TouchableOpacity
-                    key={opt.key}
-                    style={[styles.modeChip, active && styles.modeChipActive]}
-                    onPress={() => setMode(opt.key)}
-                    activeOpacity={0.7}
-                  >
-                    {opt.icon}
-                    <Text style={[styles.modeChipText, active && styles.modeChipTextActive]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              <TouchableOpacity
+                style={[styles.modeChip, showKiloan && styles.modeChipActive]}
+                onPress={() => setShowKiloan(prev => !prev)}
+                activeOpacity={0.7}
+              >
+                <Weight size={16} color={showKiloan ? colors.white : colors.textSecondary} />
+                <Text style={[styles.modeChipText, showKiloan && styles.modeChipTextActive]}>Kiloan</Text>
+                {showKiloan && <Check size={14} color={colors.white} />}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeChip, showSatuan && styles.modeChipActive]}
+                onPress={() => setShowSatuan(prev => !prev)}
+                activeOpacity={0.7}
+              >
+                <ShoppingBag size={16} color={showSatuan ? colors.white : colors.textSecondary} />
+                <Text style={[styles.modeChipText, showSatuan && styles.modeChipTextActive]}>Satuan</Text>
+                {showSatuan && <Check size={14} color={colors.white} />}
+              </TouchableOpacity>
             </View>
           </View>
 
-          {mode === 'kiloan' && (
+          {showKiloan && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Layanan Kiloan</Text>
               <Text style={styles.sectionHint}>Pilih satu atau lebih layanan</Text>
@@ -403,11 +388,11 @@ export default function NewOrderScreen() {
                           <Text style={styles.weightLabel}>Berat (kg)</Text>
                           <View style={styles.stepperRow}>
                             <TouchableOpacity
-                              style={[styles.stepperBtn, parseFloat(entry.weight) <= 0 && styles.stepperBtnDisabled]}
+                              style={[styles.stepperBtn, parseDecimal(entry.weight) <= 0 && styles.stepperBtnDisabled]}
                               onPress={() => decrementKiloanWeight(svc.id)}
                               activeOpacity={0.6}
                             >
-                              <Minus size={20} color={parseFloat(entry.weight) > 0 ? colors.primary : colors.textTertiary} />
+                              <Minus size={20} color={parseDecimal(entry.weight) > 0 ? colors.primary : colors.textTertiary} />
                             </TouchableOpacity>
                             <TextInput
                               style={styles.weightInput}
@@ -423,8 +408,9 @@ export default function NewOrderScreen() {
                             </TouchableOpacity>
                           </View>
                           {(() => {
-                            const w = parseFloat(entry.weight) || 0;
+                            const w = parseDecimal(entry.weight);
                             const sub = Math.round(svc.pricePerUnit * w);
+                            console.log(`[weight-calc] ${svc.name}: ${entry.weight} -> ${w} * ${svc.pricePerUnit} = ${sub}`);
                             return sub > 0 ? (
                               <Text style={styles.subtotalText}>Subtotal: {formatFullCurrency(sub)}</Text>
                             ) : null;
@@ -445,7 +431,7 @@ export default function NewOrderScreen() {
             </View>
           )}
 
-          {mode === 'satuan' && (
+          {showSatuan && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <ShoppingBag size={16} color={colors.primary} />
