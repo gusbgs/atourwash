@@ -10,6 +10,7 @@ import {
   ScrollView,
   Animated,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -144,7 +145,7 @@ export default function LoginScreen() {
                 disabled={!phoneNumber || isLoading}
                 activeOpacity={0.8}
               >
-                <MessageCircle size={20} color={!phoneNumber ? colors.textTertiary : colors.primary} />
+                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/240px-WhatsApp.svg.png' }} style={styles.socialIcon} />
                 <Text style={[styles.whatsappButtonText, !phoneNumber && styles.buttonTextDisabled]}>
                   Lanjutkan dengan WhatsApp
                 </Text>
@@ -162,7 +163,7 @@ export default function LoginScreen() {
                 disabled={isLoading}
                 activeOpacity={0.8}
               >
-                <Text style={styles.googleIcon}>G</Text>
+                <Image source={{ uri: 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg' }} style={styles.socialIcon} />
                 <Text style={styles.socialButtonText}>Lanjut dengan Google</Text>
               </TouchableOpacity>
 
@@ -171,8 +172,8 @@ export default function LoginScreen() {
                 disabled={isLoading}
                 activeOpacity={0.8}
               >
-                <Text style={styles.appleIcon}></Text>
-                <Text style={styles.socialButtonText}>Lanjut dengan Apple</Text>
+                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/240px-Facebook_Logo_%282019%29.png' }} style={styles.socialIcon} />
+                <Text style={styles.socialButtonText}>Lanjut dengan Facebook</Text>
               </TouchableOpacity>
 
               <View style={styles.simulationSection}>
@@ -359,15 +360,9 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
-  googleIcon: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: '#EA4335',
-  },
-  appleIcon: {
-    fontSize: 20,
-    fontWeight: '500' as const,
-    color: colors.text,
+  socialIcon: {
+    width: 22,
+    height: 22,
   },
   socialButtonText: {
     fontSize: 15,
