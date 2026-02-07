@@ -1,9 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Droplets } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-
-const { width } = Dimensions.get('window');
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -13,13 +11,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const logoScale = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
-  const bubbleAnimations = useRef(
-    Array.from({ length: 6 }, () => ({
-      translateY: new Animated.Value(0),
-      opacity: new Animated.Value(0),
-      scale: new Animated.Value(0.5),
-    }))
-  ).current;
+  const progressWidth = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -43,89 +35,21 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       }),
     ]).start();
 
-    bubbleAnimations.forEach((anim, index) => {
-      const delay = index * 200;
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.parallel([
-            Animated.timing(anim.translateY, {
-              toValue: -100 - Math.random() * 50,
-              duration: 2000 + Math.random() * 1000,
-              useNativeDriver: true,
-            }),
-            Animated.sequence([
-              Animated.timing(anim.opacity, {
-                toValue: 0.6,
-                duration: 500,
-                useNativeDriver: true,
-              }),
-              Animated.timing(anim.opacity, {
-                toValue: 0,
-                duration: 1500 + Math.random() * 500,
-                useNativeDriver: true,
-              }),
-            ]),
-            Animated.timing(anim.scale, {
-              toValue: 1,
-              duration: 2000 + Math.random() * 1000,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.parallel([
-            Animated.timing(anim.translateY, {
-              toValue: 0,
-              duration: 0,
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim.scale, {
-              toValue: 0.5,
-              duration: 0,
-              useNativeDriver: true,
-            }),
-          ]),
-        ])
-      ).start();
-    });
+    Animated.timing(progressWidth, {
+      toValue: 1,
+      duration: 2000,
+      useNativeDriver: false,
+    }).start();
 
     const timer = setTimeout(() => {
       onFinish();
-    }, 2500);
+    }, 2200);
 
     return () => clearTimeout(timer);
-  }, []);
-
-  const bubblePositions = [
-    { left: width * 0.1, bottom: 100 },
-    { left: width * 0.3, bottom: 80 },
-    { left: width * 0.5, bottom: 120 },
-    { left: width * 0.7, bottom: 90 },
-    { left: width * 0.85, bottom: 110 },
-    { left: width * 0.2, bottom: 60 },
-  ];
+  }, [logoScale, logoOpacity, textOpacity, progressWidth, onFinish]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundPattern}>
-        {bubbleAnimations.map((anim, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.bubble,
-              {
-                left: bubblePositions[index].left,
-                bottom: bubblePositions[index].bottom,
-                transform: [
-                  { translateY: anim.translateY },
-                  { scale: anim.scale },
-                ],
-                opacity: anim.opacity,
-              },
-            ]}
-          />
-        ))}
-      </View>
-
       <View style={styles.content}>
         <Animated.View
           style={[
@@ -149,7 +73,17 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
 
       <View style={styles.footer}>
         <View style={styles.loadingBar}>
-          <Animated.View style={[styles.loadingProgress]} />
+          <Animated.View
+            style={[
+              styles.loadingProgress,
+              {
+                width: progressWidth.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0%', '100%'],
+                }),
+              },
+            ]}
+          />
         </View>
       </View>
     </View>
@@ -160,17 +94,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.primary,
-  },
-  backgroundPattern: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-  bubble: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   content: {
     flex: 1,
@@ -215,7 +138,6 @@ const styles = StyleSheet.create({
   },
   loadingProgress: {
     height: '100%',
-    width: '100%',
     backgroundColor: colors.white,
     borderRadius: 2,
   },
