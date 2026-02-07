@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Layers, Search, X } from 'lucide-react-native';
+import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { mockKiloanServices, mockSatuanItems } from '@/mocks/data';
@@ -14,7 +14,12 @@ interface CustomerSuggestion {
   phone: string;
 }
 
-type LaundryMode = 'kiloan' | 'satuan' | 'kombinasi';
+type LaundryMode = 'kiloan' | 'satuan';
+
+interface KiloanEntry {
+  serviceId: string;
+  weight: string;
+}
 
 interface SatuanEntry {
   id: string;
@@ -32,6 +37,7 @@ export default function NewOrderScreen() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [showPhoneSuggestions, setShowPhoneSuggestions] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const existingCustomers = useMemo(() => {
     const map = new Map<string, CustomerSuggestion>();
@@ -61,31 +67,49 @@ export default function NewOrderScreen() {
     setShowNameSuggestions(false);
     setShowPhoneSuggestions(false);
   }, []);
+
   const [mode, setMode] = useState<LaundryMode>('kiloan');
-  const [selectedKiloanId, setSelectedKiloanId] = useState<string | null>(null);
-  const [weight, setWeight] = useState('');
+
+  const [kiloanEntries, setKiloanEntries] = useState<KiloanEntry[]>([]);
   const [satuanItems, setSatuanItems] = useState<SatuanEntry[]>(
     mockSatuanItems.map(i => ({ ...i, qty: 0 }))
   );
 
-  const selectedKiloan = useMemo(
-    () => mockKiloanServices.find(s => s.id === selectedKiloanId) ?? null,
-    [selectedKiloanId]
-  );
-
-  const incrementWeight = useCallback(() => {
-    setWeight(prev => {
-      const v = parseFloat(prev) || 0;
-      return String(Math.round((v + 0.5) * 10) / 10);
+  const addKiloanEntry = useCallback((serviceId: string) => {
+    setKiloanEntries(prev => {
+      const exists = prev.find(e => e.serviceId === serviceId);
+      if (exists) {
+        return prev.filter(e => e.serviceId !== serviceId);
+      }
+      return [...prev, { serviceId, weight: '' }];
     });
   }, []);
 
-  const decrementWeight = useCallback(() => {
-    setWeight(prev => {
-      const v = parseFloat(prev) || 0;
-      const next = Math.max(0, Math.round((v - 0.5) * 10) / 10);
-      return next === 0 ? '' : String(next);
-    });
+  const updateKiloanWeight = useCallback((serviceId: string, weight: string) => {
+    setKiloanEntries(prev =>
+      prev.map(e => e.serviceId === serviceId ? { ...e, weight } : e)
+    );
+  }, []);
+
+  const incrementKiloanWeight = useCallback((serviceId: string) => {
+    setKiloanEntries(prev =>
+      prev.map(e => {
+        if (e.serviceId !== serviceId) return e;
+        const v = parseFloat(e.weight) || 0;
+        return { ...e, weight: String(Math.round((v + 0.5) * 10) / 10) };
+      })
+    );
+  }, []);
+
+  const decrementKiloanWeight = useCallback((serviceId: string) => {
+    setKiloanEntries(prev =>
+      prev.map(e => {
+        if (e.serviceId !== serviceId) return e;
+        const v = parseFloat(e.weight) || 0;
+        const next = Math.max(0, Math.round((v - 0.5) * 10) / 10);
+        return { ...e, weight: next === 0 ? '' : String(next) };
+      })
+    );
   }, []);
 
   const updateSatuanQty = useCallback((id: string, delta: number) => {
@@ -96,11 +120,16 @@ export default function NewOrderScreen() {
     );
   }, []);
 
-  const kiloanTotal = useMemo(() => {
-    if (!selectedKiloan || !weight) return 0;
-    const w = parseFloat(weight) || 0;
-    return Math.round(selectedKiloan.pricePerUnit * w);
-  }, [selectedKiloan, weight]);
+  const kiloanTotals = useMemo(() => {
+    return kiloanEntries.map(entry => {
+      const svc = mockKiloanServices.find(s => s.id === entry.serviceId);
+      if (!svc) return { ...entry, subtotal: 0, serviceName: '', pricePerUnit: 0 };
+      const w = parseFloat(entry.weight) || 0;
+      return { ...entry, subtotal: Math.round(svc.pricePerUnit * w), serviceName: svc.name, pricePerUnit: svc.pricePerUnit };
+    });
+  }, [kiloanEntries]);
+
+  const kiloanTotal = useMemo(() => kiloanTotals.reduce((s, e) => s + e.subtotal, 0), [kiloanTotals]);
 
   const satuanTotal = useMemo(
     () => satuanItems.reduce((sum, i) => sum + i.price * i.qty, 0),
@@ -118,40 +147,84 @@ export default function NewOrderScreen() {
     [satuanItems]
   );
 
+  const activeKiloanEntries = useMemo(
+    () => kiloanEntries.filter(e => parseFloat(e.weight) > 0),
+    [kiloanEntries]
+  );
+
   const canSubmit = useMemo(() => {
     const hasCustomer = customerName.trim().length > 0;
-    if (mode === 'kiloan') return hasCustomer && !!selectedKiloan && parseFloat(weight) > 0;
+    if (mode === 'kiloan') return hasCustomer && activeKiloanEntries.length > 0;
     if (mode === 'satuan') return hasCustomer && activeSatuanCount > 0;
-    return hasCustomer && ((!!selectedKiloan && parseFloat(weight) > 0) || activeSatuanCount > 0);
-  }, [customerName, mode, selectedKiloan, weight, activeSatuanCount]);
+    return hasCustomer && (activeKiloanEntries.length > 0 || activeSatuanCount > 0);
+  }, [customerName, mode, activeKiloanEntries, activeSatuanCount]);
+
+  const confirmationItems = useMemo(() => {
+    const items: { label: string; qty: string; subtotal: number }[] = [];
+    if (mode === 'kiloan' || mode === 'satuan') {
+      kiloanTotals.forEach(e => {
+        if (e.subtotal > 0) {
+          items.push({ label: e.serviceName, qty: `${e.weight} kg`, subtotal: e.subtotal });
+        }
+      });
+    }
+    if (mode === 'satuan' || mode === 'kiloan') {
+      satuanItems.filter(i => i.qty > 0).forEach(i => {
+        items.push({ label: i.name, qty: `${i.qty} item`, subtotal: i.price * i.qty });
+      });
+    }
+    return items;
+  }, [mode, kiloanTotals, satuanItems]);
+
+  const allConfirmationItems = useMemo(() => {
+    const items: { label: string; qty: string; subtotal: number }[] = [];
+    kiloanTotals.forEach(e => {
+      if (e.subtotal > 0) {
+        items.push({ label: e.serviceName, qty: `${e.weight} kg`, subtotal: e.subtotal });
+      }
+    });
+    satuanItems.filter(i => i.qty > 0).forEach(i => {
+      items.push({ label: i.name, qty: `${i.qty} item`, subtotal: i.price * i.qty });
+    });
+    return items;
+  }, [kiloanTotals, satuanItems]);
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    setShowConfirmation(true);
+  };
 
+  const handleConfirmOrder = () => {
     const parts: string[] = [];
     let totalW = 0;
     let totalItems = 0;
     let svcName = '';
 
-    if ((mode === 'kiloan' || mode === 'kombinasi') && selectedKiloan && parseFloat(weight) > 0) {
-      totalW = parseFloat(weight);
-      svcName = selectedKiloan.name;
-      parts.push(`${weight} kg ${selectedKiloan.name}`);
-    }
+    activeKiloanEntries.forEach(entry => {
+      const svc = mockKiloanServices.find(s => s.id === entry.serviceId);
+      if (svc) {
+        const w = parseFloat(entry.weight) || 0;
+        totalW += w;
+        parts.push(`${entry.weight} kg ${svc.name}`);
+        if (!svcName) svcName = svc.name;
+        else svcName += ` + ${svc.name}`;
+      }
+    });
 
-    if (mode === 'satuan' || mode === 'kombinasi') {
-      const activeItems = satuanItems.filter(i => i.qty > 0);
-      activeItems.forEach(i => {
-        totalItems += i.qty;
-        parts.push(`${i.qty}x ${i.name}`);
-      });
-      if (!svcName && activeItems.length > 0) svcName = 'Laundry Satuan';
-      if (mode === 'kombinasi' && svcName && activeItems.length > 0) svcName += ' + Satuan';
+    const activeItems = satuanItems.filter(i => i.qty > 0);
+    activeItems.forEach(i => {
+      totalItems += i.qty;
+      parts.push(`${i.qty}x ${i.name}`);
+    });
+    if (activeItems.length > 0) {
+      svcName = svcName ? svcName + ' + Satuan' : 'Laundry Satuan';
     }
 
     const estimatedDays = svcName.includes('Express') ? 1 : 3;
     const estimatedDate = new Date();
     estimatedDate.setDate(estimatedDate.getDate() + estimatedDays);
+
+    const finalTotal = kiloanTotal + satuanTotal;
 
     const newOrder: Order = {
       id: `ORD-${String(orders.length + 1).padStart(3, '0')}`,
@@ -162,7 +235,7 @@ export default function NewOrderScreen() {
       pickupTime: '17:00',
       status: 'dalam_proses',
       serviceType: svcName,
-      totalPrice,
+      totalPrice: finalTotal,
       paidAmount: 0,
       paymentStatus: 'belum_bayar',
       createdAt: new Date().toISOString(),
@@ -172,17 +245,14 @@ export default function NewOrderScreen() {
     };
 
     addOrder(newOrder);
+    setShowConfirmation(false);
     router.back();
   };
 
   const modeOptions: { key: LaundryMode; label: string; icon: React.ReactNode }[] = [
     { key: 'kiloan', label: 'Kiloan', icon: <Weight size={16} color={mode === 'kiloan' ? colors.white : colors.textSecondary} /> },
     { key: 'satuan', label: 'Satuan', icon: <ShoppingBag size={16} color={mode === 'satuan' ? colors.white : colors.textSecondary} /> },
-    { key: 'kombinasi', label: 'Kombinasi', icon: <Layers size={16} color={mode === 'kombinasi' ? colors.white : colors.textSecondary} /> },
   ];
-
-  const showKiloan = mode === 'kiloan' || mode === 'kombinasi';
-  const showSatuan = mode === 'satuan' || mode === 'kombinasi';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -294,74 +364,88 @@ export default function NewOrderScreen() {
             </View>
           </View>
 
-          {showKiloan && (
+          {mode === 'kiloan' && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Layanan Kiloan</Text>
+              <Text style={styles.sectionHint}>Pilih satu atau lebih layanan</Text>
               <View style={styles.servicesGrid}>
                 {mockKiloanServices.map(svc => {
-                  const sel = selectedKiloanId === svc.id;
+                  const entry = kiloanEntries.find(e => e.serviceId === svc.id);
+                  const sel = !!entry;
                   return (
-                    <TouchableOpacity
-                      key={svc.id}
-                      style={[styles.serviceCard, sel && styles.serviceCardSel]}
-                      onPress={() => setSelectedKiloanId(svc.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.serviceRow}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.serviceName, sel && styles.serviceNameSel]}>{svc.name}</Text>
-                          <Text style={styles.serviceDur}>{svc.duration}</Text>
-                        </View>
-                        <View style={{ alignItems: 'flex-end' }}>
-                          <Text style={[styles.servicePrice, sel && styles.servicePriceSel]}>
-                            {formatFullCurrency(svc.pricePerUnit)}
-                          </Text>
-                          <Text style={styles.serviceUnit}>/{svc.unit}</Text>
-                        </View>
-                        {sel && (
-                          <View style={styles.checkBadge}>
-                            <Check size={12} color={colors.white} />
+                    <View key={svc.id}>
+                      <TouchableOpacity
+                        style={[styles.serviceCard, sel && styles.serviceCardSel]}
+                        onPress={() => addKiloanEntry(svc.id)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.serviceRow}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.serviceName, sel && styles.serviceNameSel]}>{svc.name}</Text>
+                            <Text style={styles.serviceDur}>{svc.duration}</Text>
                           </View>
-                        )}
-                      </View>
-                    </TouchableOpacity>
+                          <View style={{ alignItems: 'flex-end' as const }}>
+                            <Text style={[styles.servicePrice, sel && styles.servicePriceSel]}>
+                              {formatFullCurrency(svc.pricePerUnit)}
+                            </Text>
+                            <Text style={styles.serviceUnit}>/{svc.unit}</Text>
+                          </View>
+                          {sel && (
+                            <View style={styles.checkBadge}>
+                              <Check size={12} color={colors.white} />
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+
+                      {sel && entry && (
+                        <View style={styles.weightSection}>
+                          <Text style={styles.weightLabel}>Berat (kg)</Text>
+                          <View style={styles.stepperRow}>
+                            <TouchableOpacity
+                              style={[styles.stepperBtn, parseFloat(entry.weight) <= 0 && styles.stepperBtnDisabled]}
+                              onPress={() => decrementKiloanWeight(svc.id)}
+                              activeOpacity={0.6}
+                            >
+                              <Minus size={20} color={parseFloat(entry.weight) > 0 ? colors.primary : colors.textTertiary} />
+                            </TouchableOpacity>
+                            <TextInput
+                              style={styles.weightInput}
+                              value={entry.weight}
+                              onChangeText={(t) => updateKiloanWeight(svc.id, t)}
+                              keyboardType="decimal-pad"
+                              placeholder="0"
+                              placeholderTextColor={colors.textTertiary}
+                              textAlign="center"
+                            />
+                            <TouchableOpacity style={styles.stepperBtn} onPress={() => incrementKiloanWeight(svc.id)} activeOpacity={0.6}>
+                              <Plus size={20} color={colors.primary} />
+                            </TouchableOpacity>
+                          </View>
+                          {(() => {
+                            const w = parseFloat(entry.weight) || 0;
+                            const sub = Math.round(svc.pricePerUnit * w);
+                            return sub > 0 ? (
+                              <Text style={styles.subtotalText}>Subtotal: {formatFullCurrency(sub)}</Text>
+                            ) : null;
+                          })()}
+                        </View>
+                      )}
+                    </View>
                   );
                 })}
               </View>
 
-              {selectedKiloan && (
-                <View style={styles.weightSection}>
-                  <Text style={styles.weightLabel}>Berat (kg)</Text>
-                  <View style={styles.stepperRow}>
-                    <TouchableOpacity
-                      style={[styles.stepperBtn, parseFloat(weight) <= 0 && styles.stepperBtnDisabled]}
-                      onPress={decrementWeight}
-                      activeOpacity={0.6}
-                    >
-                      <Minus size={20} color={parseFloat(weight) > 0 ? colors.primary : colors.textTertiary} />
-                    </TouchableOpacity>
-                    <TextInput
-                      style={styles.weightInput}
-                      value={weight}
-                      onChangeText={setWeight}
-                      keyboardType="decimal-pad"
-                      placeholder="0"
-                      placeholderTextColor={colors.textTertiary}
-                      textAlign="center"
-                    />
-                    <TouchableOpacity style={styles.stepperBtn} onPress={incrementWeight} activeOpacity={0.6}>
-                      <Plus size={20} color={colors.primary} />
-                    </TouchableOpacity>
-                  </View>
-                  {kiloanTotal > 0 && (
-                    <Text style={styles.subtotalText}>Subtotal: {formatFullCurrency(kiloanTotal)}</Text>
-                  )}
+              {kiloanTotal > 0 && (
+                <View style={styles.kiloanTotalRow}>
+                  <Text style={styles.kiloanTotalLabel}>Total Kiloan</Text>
+                  <Text style={styles.kiloanTotalValue}>{formatFullCurrency(kiloanTotal)}</Text>
                 </View>
               )}
             </View>
           )}
 
-          {showSatuan && (
+          {mode === 'satuan' && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <ShoppingBag size={16} color={colors.primary} />
@@ -433,10 +517,77 @@ export default function NewOrderScreen() {
             disabled={!canSubmit}
             activeOpacity={0.8}
           >
-            <Text style={styles.submitButtonText}>Buat Pesanan</Text>
+            <Text style={styles.submitButtonText}>Lanjutkan</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showConfirmation}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowConfirmation(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <FileText size={22} color={colors.primary} />
+              <Text style={styles.modalTitle}>Konfirmasi Pesanan</Text>
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.confirmSection}>
+                <Text style={styles.confirmLabel}>Pelanggan</Text>
+                <Text style={styles.confirmValue}>{customerName}</Text>
+                {customerPhone.trim().length > 0 && (
+                  <Text style={styles.confirmSubvalue}>{customerPhone}</Text>
+                )}
+              </View>
+
+              <View style={styles.confirmDivider} />
+
+              <View style={styles.confirmSection}>
+                <Text style={styles.confirmLabel}>Detail Pesanan</Text>
+                {allConfirmationItems.map((item, idx) => (
+                  <View key={idx} style={styles.confirmItemRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.confirmItemName}>{item.label}</Text>
+                      <Text style={styles.confirmItemQty}>{item.qty}</Text>
+                    </View>
+                    <Text style={styles.confirmItemPrice}>{formatFullCurrency(item.subtotal)}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.confirmDivider} />
+
+              <View style={styles.confirmTotalRow}>
+                <Text style={styles.confirmTotalLabel}>Total</Text>
+                <Text style={styles.confirmTotalValue}>{formatFullCurrency(kiloanTotal + satuanTotal)}</Text>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalBackBtn}
+                onPress={() => setShowConfirmation(false)}
+                activeOpacity={0.7}
+              >
+                <ChevronLeft size={18} color={colors.textSecondary} />
+                <Text style={styles.modalBackText}>Kembali</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={handleConfirmOrder}
+                activeOpacity={0.8}
+              >
+                <Printer size={18} color={colors.white} />
+                <Text style={styles.modalConfirmText}>Simpan & Cetak</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -500,18 +651,14 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 12,
   },
-  inputGroup: {
+  sectionHint: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: -8,
     marginBottom: 12,
   },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    fontSize: 15,
-    color: colors.text,
+  inputGroup: {
+    marginBottom: 12,
   },
   searchInputRow: {
     flexDirection: 'row',
@@ -636,12 +783,12 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   weightSection: {
-    marginTop: 16,
+    marginTop: 8,
     backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.primary + '30',
   },
   weightLabel: {
     fontSize: 14,
@@ -681,7 +828,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     color: colors.primary,
-    textAlign: 'right',
+    textAlign: 'right' as const,
+  },
+  kiloanTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: colors.primaryBg,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.primary + '20',
+  },
+  kiloanTotalLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.primaryDark,
+  },
+  kiloanTotalValue: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.primaryDark,
   },
   countBadge: {
     backgroundColor: colors.primary,
@@ -796,6 +964,138 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.white,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+    paddingTop: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  modalScroll: {
+    paddingHorizontal: 24,
+  },
+  confirmSection: {
+    paddingVertical: 16,
+  },
+  confirmLabel: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    marginBottom: 6,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  confirmValue: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  confirmSubvalue: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  confirmDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+  },
+  confirmItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  confirmItemName: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: colors.text,
+  },
+  confirmItemQty: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  confirmItemPrice: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  confirmTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  confirmTotalLabel: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+  },
+  confirmTotalValue: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: colors.primary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    paddingBottom: 36,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  modalBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalBackText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+  },
+  modalConfirmText: {
     fontSize: 16,
     fontWeight: '600' as const,
     color: colors.white,
