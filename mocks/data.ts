@@ -31,6 +31,28 @@ export const mockServices: Service[] = [
   { id: '4', name: 'Setrika Saja', duration: '1 hari', pricePerUnit: 5000, unit: 'kg' },
 ];
 
+export const mockKiloanServices: Service[] = [
+  { id: 'k1', name: 'Cuci Reguler', duration: '2-3 hari', pricePerUnit: 7000, unit: 'kg' },
+  { id: 'k2', name: 'Cuci Express', duration: '1 hari', pricePerUnit: 12000, unit: 'kg' },
+  { id: 'k3', name: 'Cuci Setrika', duration: '2-3 hari', pricePerUnit: 9000, unit: 'kg' },
+  { id: 'k4', name: 'Setrika Saja', duration: '1 hari', pricePerUnit: 5000, unit: 'kg' },
+];
+
+export const mockSatuanItems = [
+  { id: 's1', name: 'Kemeja', price: 8000, icon: '👔' },
+  { id: 's2', name: 'Celana', price: 8000, icon: '👖' },
+  { id: 's3', name: 'Kaos', price: 6000, icon: '👕' },
+  { id: 's4', name: 'Jaket', price: 15000, icon: '🧥' },
+  { id: 's5', name: 'Jas/Blazer', price: 25000, icon: '🤵' },
+  { id: 's6', name: 'Gaun/Dress', price: 20000, icon: '👗' },
+  { id: 's7', name: 'Selimut', price: 20000, icon: '🛏️' },
+  { id: 's8', name: 'Sprei', price: 15000, icon: '🛌' },
+  { id: 's9', name: 'Gordyn (m²)', price: 12000, icon: '🪟' },
+  { id: 's10', name: 'Sepatu', price: 30000, icon: '👟' },
+  { id: 's11', name: 'Tas', price: 25000, icon: '👜' },
+  { id: 's12', name: 'Boneka Kecil', price: 15000, icon: '🧸' },
+];
+
 export const mockOrders: Order[] = [
   {
     id: 'ORD-001',
