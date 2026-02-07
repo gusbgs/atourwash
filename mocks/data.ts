@@ -1,4 +1,4 @@
-import { Order, Service, User, ShiftInfo, DashboardStats } from '@/types';
+import { Order, Service, User, ShiftInfo, DashboardStats, Branch } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -60,6 +60,42 @@ export const mockSatuanItems = [
   { id: 's10', name: 'Sepatu', price: 30000, icon: '👟' },
   { id: 's11', name: 'Tas', price: 25000, icon: '👜' },
   { id: 's12', name: 'Boneka Kecil', price: 15000, icon: '🧸' },
+];
+
+export const mockBranches: Branch[] = [
+  { id: 'b1', name: 'AtourWash Pusat', address: 'Jl. Sudirman No. 12' },
+  { id: 'b2', name: 'AtourWash Cabang BSD', address: 'Jl. BSD Raya No. 5' },
+  { id: 'b3', name: 'AtourWash Cabang Depok', address: 'Jl. Margonda No. 88' },
+];
+
+export const mockWeeklyRevenue = [
+  { label: 'W1', value: 2400000 },
+  { label: 'W2', value: 3100000 },
+  { label: 'W3', value: 2800000 },
+  { label: 'W4', value: 3500000 },
+];
+
+export const mockMonthlyRevenue = [
+  { label: 'Jan', value: 9500000 },
+  { label: 'Feb', value: 11200000 },
+  { label: 'Mar', value: 10800000 },
+  { label: 'Apr', value: 12500000 },
+  { label: 'Mei', value: 13100000 },
+  { label: 'Jun', value: 11800000 },
+];
+
+export const mockYearlyRevenue = [
+  { label: '2024', value: 120000000 },
+  { label: '2025', value: 145000000 },
+  { label: '2026', value: 38000000 },
+];
+
+export const mockServiceDistribution = [
+  { label: 'Cuci Reguler', value: 45, color: '#23A174' },
+  { label: 'Cuci Express', value: 25, color: '#3B82F6' },
+  { label: 'Dry Clean', value: 15, color: '#F59E0B' },
+  { label: 'Setrika Saja', value: 10, color: '#8B5CF6' },
+  { label: 'Lainnya', value: 5, color: '#94A3B8' },
 ];
 
 export const mockOrders: Order[] = [

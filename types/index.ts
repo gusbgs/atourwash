@@ -55,3 +55,9 @@ export interface DashboardStats {
   overdueOrders: number;
   completedOrders: number;
 }
+
+export interface Branch {
+  id: string;
+  name: string;
+  address: string;
+}
