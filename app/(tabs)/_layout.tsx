@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
-import { Home, ClipboardList, Factory, User, Plus } from 'lucide-react-native';
+import { Home, ClipboardList, Factory, User, Plus } from '@/utils/icons';
+import type { HugeIcon } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
-function TabBarIcon({ icon: Icon, focused }: { icon: typeof Home; focused: boolean }) {
+function TabBarIcon({ icon: Icon, focused }: { icon: HugeIcon; focused: boolean }) {
   return <Icon size={24} color={focused ? colors.primary : colors.textTertiary} />;
 }
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { formatCurrency } from '@/utils/format';
 

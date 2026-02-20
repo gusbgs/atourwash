@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Building2, MapPin, Phone, Clock, Plus, X, Trash2, Pencil } from 'lucide-react-native';
+import { ArrowLeft, Building2, MapPin, Phone, Clock, Plus, X, Trash2, Pencil } from '@/utils/icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/constants/colors';
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '@/constants/colors';
-import { LucideIcon } from 'lucide-react-native';
+import type { HugeIcon } from '@/utils/icons';
 
 interface StatCardProps {
-  icon: LucideIcon;
+  icon: HugeIcon;
   iconColor: string;
   iconBgColor: string;
   value: string;

@@ -18,7 +18,7 @@ import {
   ArrowRight,
   Shield,
   MessageCircle,
-} from 'lucide-react-native';
+} from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 

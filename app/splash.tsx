@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Droplets } from 'lucide-react-native';
+import { Droplets } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
 interface SplashScreenProps {

@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, FileText, BarChart3, PieChart, Download, Calendar, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, FileText, BarChart3, PieChart, Download, Calendar, ChevronRight } from '@/utils/icons';
+import type { HugeIcon } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
 interface ReportItem {
   id: string;
   title: string;
   description: string;
-  icon: typeof FileText;
+  icon: HugeIcon;
   iconColor: string;
   iconBg: string;
 }

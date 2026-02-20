@@ -12,7 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowRight, ChevronRight } from 'lucide-react-native';
+import { ArrowRight, ChevronRight } from '@/utils/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';

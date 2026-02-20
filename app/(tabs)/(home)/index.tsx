@@ -3,11 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Polyline, Line, Circle as SvgCircle, Text as SvgText, Path, G } from 'react-native-svg';
-import { Wallet, ClipboardList, AlertTriangle, TrendingUp, Users, Building2, Package, FileText, ChevronRight, Droplets, Bell, Grid3x3, ChevronDown, MapPin, Check } from 'lucide-react-native';
+import { Wallet, TrendingUp, Users, Building2, Package, FileText, ChevronRight, Droplets, Bell, Grid3x3, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency } from '@/utils/format';
-import { ShiftBanner } from '@/components/ShiftBanner';
 import { OrderCard } from '@/components/OrderCard';
 import { HomeSkeletonLoader } from '@/components/Skeleton';
 import { mockBranches, mockWeeklyRevenue, mockMonthlyRevenue, mockYearlyRevenue, mockServiceDistribution } from '@/mocks/data';
@@ -145,7 +144,7 @@ const pieStyles = StyleSheet.create({
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { orders, shiftInfo, dashboardStats, toggleShift } = useApp();
+  const { orders, dashboardStats } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState(mockBranches[0]);
   const [branchModalVisible, setBranchModalVisible] = useState(false);
@@ -157,6 +156,10 @@ export default function HomeScreen() {
   }, []);
 
   const recentOrders = orders.slice(0, 3);
+
+  const antrianCount = useMemo(() => orders.filter(o => o.productionStatus === 'antrian').length, [orders]);
+  const diprosesCount = useMemo(() => orders.filter(o => o.productionStatus === 'diproses').length, [orders]);
+  const siapDiambilCount = useMemo(() => orders.filter(o => o.productionStatus === 'siap_diambil').length, [orders]);
 
   const chartData = useMemo(() => {
     if (chartPeriod === 'weekly') return mockWeeklyRevenue;
@@ -246,64 +249,27 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <ShiftBanner
-          isActive={shiftInfo.isActive}
-          startTime={shiftInfo.startTime}
-          onToggle={toggleShift}
-        />
-
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: colors.infoBg }]}>
-              <ClipboardList size={18} color={colors.info} />
+            <View style={[styles.statIconBox, { backgroundColor: '#FFF3E0' }]}>
+              <Clock size={18} color={colors.warning} />
             </View>
-            <Text style={styles.statValue}>{dashboardStats.activeOrders}</Text>
-            <Text style={styles.statLabel}>Order Aktif</Text>
+            <Text style={styles.statValue}>{antrianCount}</Text>
+            <Text style={styles.statLabel}>Antrian</Text>
           </View>
           <View style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: colors.errorBg }]}>
-              <AlertTriangle size={18} color={colors.error} />
+            <View style={[styles.statIconBox, { backgroundColor: colors.primaryBg }]}>
+              <Loader size={18} color={colors.primary} />
             </View>
-            <Text style={styles.statValue}>{dashboardStats.overdueOrders}</Text>
-            <Text style={styles.statLabel}>Overdue</Text>
+            <Text style={styles.statValue}>{diprosesCount}</Text>
+            <Text style={styles.statLabel}>Diproses</Text>
           </View>
           <View style={styles.statCard}>
             <View style={[styles.statIconBox, { backgroundColor: colors.successBg }]}>
-              <TrendingUp size={18} color={colors.success} />
+              <PackageCheck size={18} color={colors.success} />
             </View>
-            <Text style={styles.statValue}>{dashboardStats.completedOrders}</Text>
-            <Text style={styles.statLabel}>Selesai</Text>
-          </View>
-        </View>
-
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Trend Pemasukan</Text>
-          <View style={styles.chartCard}>
-            <View style={styles.periodTabs}>
-              {([
-                { key: 'weekly' as ChartPeriod, label: 'Mingguan' },
-                { key: 'monthly' as ChartPeriod, label: 'Bulanan' },
-                { key: 'yearly' as ChartPeriod, label: 'Tahunan' },
-              ]).map(tab => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[styles.periodTab, chartPeriod === tab.key && styles.periodTabActive]}
-                  onPress={() => setChartPeriod(tab.key)}
-                >
-                  <Text style={[styles.periodTabText, chartPeriod === tab.key && styles.periodTabTextActive]}>{tab.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.chartContainer}>
-              <LineChart data={chartData} />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Order Berdasarkan Layanan</Text>
-          <View style={styles.chartCard}>
-            <PieChart data={mockServiceDistribution} />
+            <Text style={styles.statValue}>{siapDiambilCount}</Text>
+            <Text style={styles.statLabel}>Siap Diambil</Text>
           </View>
         </View>
 
@@ -335,6 +301,37 @@ export default function HomeScreen() {
                 <Text style={styles.menuLabel} numberOfLines={1}>{lainnyaItem.label}</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionTitle}>Trend Pemasukan</Text>
+          <View style={styles.chartCard}>
+            <View style={styles.periodTabs}>
+              {([
+                { key: 'weekly' as ChartPeriod, label: 'Mingguan' },
+                { key: 'monthly' as ChartPeriod, label: 'Bulanan' },
+                { key: 'yearly' as ChartPeriod, label: 'Tahunan' },
+              ]).map(tab => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[styles.periodTab, chartPeriod === tab.key && styles.periodTabActive]}
+                  onPress={() => setChartPeriod(tab.key)}
+                >
+                  <Text style={[styles.periodTabText, chartPeriod === tab.key && styles.periodTabTextActive]}>{tab.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.chartContainer}>
+              <LineChart data={chartData} />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionTitle}>Order Berdasarkan Layanan</Text>
+          <View style={styles.chartCard}>
+            <PieChart data={mockServiceDistribution} />
           </View>
         </View>
 
@@ -532,8 +529,8 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 12,
-    marginTop: 16,
+    marginBottom: 16,
+    marginTop: 4,
   },
   statCard: {
     flex: 1,

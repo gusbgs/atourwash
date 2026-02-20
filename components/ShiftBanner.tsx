@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Clock, LogOut } from 'lucide-react-native';
+import { Clock, LogOut } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
 interface ShiftBannerProps {

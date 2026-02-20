@@ -10,7 +10,7 @@ import {
   Clock,
   AlertCircle,
   ChevronRight
-} from 'lucide-react-native';
+} from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { ProductionStatus } from '@/types';

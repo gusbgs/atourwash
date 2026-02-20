@@ -13,7 +13,7 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle
-} from 'lucide-react-native';
+} from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { PaymentBadge } from '@/components/PaymentBadge';

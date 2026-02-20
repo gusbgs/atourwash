@@ -2,14 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Users, Building2, Wallet, Package, FileText, Settings, HelpCircle, Bell, Shield, Truck, Tag, UserCog, Printer, MessageSquare } from 'lucide-react-native';
+import { ArrowLeft, Users, Building2, Wallet, Package, FileText, Settings, HelpCircle, Bell, Shield, Truck, Tag, UserCog, Printer, MessageSquare } from '@/utils/icons';
+import type { HugeIcon } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
 const MENU_COLOR = colors.primary;
 const MENU_BG = colors.primaryBg;
 
 interface MenuItem {
-  icon: typeof Users;
+  icon: HugeIcon;
   label: string;
   color: string;
   bgColor: string;

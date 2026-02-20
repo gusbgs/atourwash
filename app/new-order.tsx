@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft } from 'lucide-react-native';
+import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { mockKiloanServices, mockSatuanItems, mockFragrances } from '@/mocks/data';

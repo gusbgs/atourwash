@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Clock, LogOut, Bell, Settings, HelpCircle, ChevronRight, Shield, CreditCard, MessageCircle, Star, FileText, Info, Crown, Store, Calendar, ArrowUpCircle } from 'lucide-react-native';
+import { User, Clock, LogOut, Bell, Settings, HelpCircle, ChevronRight, Shield, CreditCard, MessageCircle, Star, FileText, Info, Crown, Store, Calendar, ArrowUpCircle } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Phone, MapPin, ShoppingBag, Calendar, TrendingUp, CreditCard } from 'lucide-react-native';
+import { ArrowLeft, Phone, MapPin, ShoppingBag, Calendar, TrendingUp, CreditCard } from '@/utils/icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/constants/colors';
 import { formatFullCurrency, getStatusLabel } from '@/utils/format';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { User, Clock, ChevronRight } from 'lucide-react-native';
+import { User, Clock, ChevronRight } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { Order } from '@/types';
 import { PaymentBadge } from './PaymentBadge';
