@@ -49,7 +49,7 @@ export default function ProductionScreen() {
   };
 
   const handleOrderPress = (orderId: string) => {
-    router.push(`/production-detail?id=${orderId}`);
+    router.push(`/production-detail?id=${orderId}` as any);
   };
 
   const getStatusColor = (status: ProductionStatus) => {

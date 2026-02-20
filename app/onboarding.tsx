@@ -74,7 +74,7 @@ export default function OnboardingScreen() {
 
   const handleFinish = async () => {
     await completeOnboarding();
-    router.replace('/login');
+    router.replace('/login' as any);
   };
 
   const onScroll = Animated.event(

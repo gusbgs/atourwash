@@ -25,13 +25,13 @@ function RootLayoutNav() {
   useEffect(() => {
     if (showSplash || isLoading) return;
 
-    const inAuthGroup = segments[0] === 'login' || segments[0] === 'onboarding';
+    const inAuthGroup = segments[0] === ('login' as string) || segments[0] === ('onboarding' as string);
 
     if (!isAuthenticated) {
       if (!hasSeenOnboarding) {
-        router.replace('/onboarding');
+        router.replace('/onboarding' as any);
       } else if (!inAuthGroup) {
-        router.replace('/login');
+        router.replace('/login' as any);
       }
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/' as any);

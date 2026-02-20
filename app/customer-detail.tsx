@@ -115,7 +115,7 @@ export default function CustomerDetailScreen() {
       <TouchableOpacity
         style={styles.orderCard}
         activeOpacity={0.7}
-        onPress={() => router.push({ pathname: '/order-detail', params: { id: item.id } })}
+        onPress={() => router.push({ pathname: '/order-detail' as any, params: { id: item.id } })}
       >
         <View style={styles.orderTop}>
           <Text style={styles.orderId}>{item.id}</Text>

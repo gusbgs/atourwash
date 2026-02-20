@@ -338,7 +338,7 @@ export default function HomeScreen() {
         <View style={styles.recentSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Order Terbaru</Text>
-            <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push('/orders')}>
+            <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push('/orders' as any)}>
               <Text style={styles.seeAll}>Lihat Semua</Text>
               <ChevronRight size={16} color={colors.primary} />
             </TouchableOpacity>

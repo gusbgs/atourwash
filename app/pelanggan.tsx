@@ -94,7 +94,7 @@ export default function PelangganScreen() {
   );
 
   const renderCustomer = ({ item }: { item: Customer }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => router.push({ pathname: '/customer-detail', params: { id: item.id } })}>
+    <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => router.push({ pathname: '/customer-detail' as any, params: { id: item.id } })}>
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
       </View>

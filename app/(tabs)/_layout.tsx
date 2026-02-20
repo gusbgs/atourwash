@@ -15,7 +15,7 @@ function FABButton() {
   return (
     <TouchableOpacity
       style={styles.fabButton}
-      onPress={() => router.push('/new-order')}
+      onPress={() => router.push('/new-order' as any)}
       activeOpacity={0.8}
     >
       <Plus size={28} color={colors.white} strokeWidth={2.5} />
