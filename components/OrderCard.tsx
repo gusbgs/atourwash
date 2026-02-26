@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { User, Clock, ChevronRight, Phone } from '@/utils/icons';
+import { User, Clock, ChevronRight, Phone, Calendar } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { Order } from '@/types';
 import { PaymentBadge } from './PaymentBadge';
-import { formatFullCurrency } from '@/utils/format';
+import { formatFullCurrency, formatDate } from '@/utils/format';
 
 interface OrderCardProps {
   order: Order;
@@ -45,6 +45,10 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
             <View style={styles.phoneSeparator} />
             <Phone size={12} color={colors.textTertiary} />
             <Text style={styles.customerPhone}>{order.customerPhone}</Text>
+          </View>
+          <View style={styles.dateRow}>
+            <Calendar size={12} color={colors.textTertiary} />
+            <Text style={styles.dateText}>{formatDate(order.createdAt)}</Text>
           </View>
           <View style={styles.bottomRow}>
             <Text style={styles.priceValue}>{formatFullCurrency(order.totalPrice)}</Text>
@@ -113,6 +117,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   customerPhone: {
+    fontSize: 12,
+    color: colors.textTertiary,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 6,
+  },
+  dateText: {
     fontSize: 12,
     color: colors.textTertiary,
   },

@@ -25,6 +25,12 @@ export function getStatusLabel(status: string): string {
   return labels[status] || status;
 }
 
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
 export function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Selamat pagi';

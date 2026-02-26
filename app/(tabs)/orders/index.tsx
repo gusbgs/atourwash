@@ -1,16 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions, Animated, Modal, Pressable } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions, Animated, Modal, Pressable, SectionList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Search, ClipboardList, Clock, Wallet, Check, X, Settings, FilterHorizontal, Calendar } from '@/utils/icons';
+import { Search, ClipboardList, Clock, Wallet, Check, X, Settings, FilterHorizontal, Calendar, ChevronDown, User, Phone } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { OrderCard } from '@/components/OrderCard';
 import { PaymentStatus } from '@/types';
 import { OrdersSkeletonLoader } from '@/components/Skeleton';
-import { OrderStatus } from '@/types';
+import { OrderStatus, Order } from '@/types';
+import { getStatusLabel } from '@/utils/format';
 
 type SortOption = 'terbaru' | 'terlama' | 'harga_tinggi' | 'harga_rendah';
+type GroupOption = 'none' | 'nama' | 'telepon' | 'status' | 'layanan';
 
 const serviceTypes = ['Semua', 'Cuci Reguler', 'Cuci Express', 'Dry Clean', 'Setrika Saja'];
 const statusOptions: { key: OrderStatus | 'semua'; label: string }[] = [
@@ -26,6 +28,31 @@ const sortOptions: { key: SortOption; label: string }[] = [
   { key: 'harga_tinggi', label: 'Harga Tertinggi' },
   { key: 'harga_rendah', label: 'Harga Terendah' },
 ];
+const groupOptions: { key: GroupOption; label: string }[] = [
+  { key: 'none', label: 'Tanpa Grup' },
+  { key: 'nama', label: 'Nama Pelanggan' },
+  { key: 'telepon', label: 'Nomor Telepon' },
+  { key: 'status', label: 'Status Order' },
+  { key: 'layanan', label: 'Jenis Layanan' },
+];
+
+const months = [
+  'Semua', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+function getAvailableYears(orders: Order[]): string[] {
+  const years = new Set<string>();
+  orders.forEach(o => {
+    const y = new Date(o.createdAt).getFullYear().toString();
+    years.add(y);
+  });
+  return ['Semua', ...Array.from(years).sort((a, b) => Number(b) - Number(a))];
+}
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
 
 type FilterType = 'semua' | PaymentStatus;
 
@@ -52,10 +79,27 @@ export default function OrdersScreen() {
   const [tempService, setTempService] = useState('Semua');
   const [tempStatus, setTempStatus] = useState<OrderStatus | 'semua'>('semua');
   const [tempSort, setTempSort] = useState<SortOption>('terbaru');
+  const [filterYear, setFilterYear] = useState('Semua');
+  const [filterMonth, setFilterMonth] = useState('Semua');
+  const [filterDay, setFilterDay] = useState('Semua');
+  const [filterGroup, setFilterGroup] = useState<GroupOption>('none');
+  const [tempYear, setTempYear] = useState('Semua');
+  const [tempMonth, setTempMonth] = useState('Semua');
+  const [tempDay, setTempDay] = useState('Semua');
+  const [tempGroup, setTempGroup] = useState<GroupOption>('none');
   const sheetAnim = useRef(new Animated.Value(0)).current;
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
-  const activeFilterCount = (filterService !== 'Semua' ? 1 : 0) + (filterStatus !== 'semua' ? 1 : 0) + (filterSort !== 'terbaru' ? 1 : 0);
+  const availableYears = useMemo(() => getAvailableYears(orders), [orders]);
+
+  const availableDays = useMemo(() => {
+    if (tempYear === 'Semua' || tempMonth === 'Semua') return ['Semua'];
+    const monthIdx = months.indexOf(tempMonth);
+    const total = getDaysInMonth(Number(tempYear), monthIdx);
+    return ['Semua', ...Array.from({ length: total }, (_, i) => String(i + 1))];
+  }, [tempYear, tempMonth]);
+
+  const activeFilterCount = (filterService !== 'Semua' ? 1 : 0) + (filterStatus !== 'semua' ? 1 : 0) + (filterSort !== 'terbaru' ? 1 : 0) + (filterYear !== 'Semua' ? 1 : 0) + (filterMonth !== 'Semua' ? 1 : 0) + (filterDay !== 'Semua' ? 1 : 0) + (filterGroup !== 'none' ? 1 : 0);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -95,6 +139,10 @@ export default function OrdersScreen() {
     setTempService(filterService);
     setTempStatus(filterStatus);
     setTempSort(filterSort);
+    setTempYear(filterYear);
+    setTempMonth(filterMonth);
+    setTempDay(filterDay);
+    setTempGroup(filterGroup);
     setShowFilterSheet(true);
     Animated.spring(sheetAnim, {
       toValue: 1,
@@ -102,7 +150,7 @@ export default function OrdersScreen() {
       tension: 65,
       friction: 11,
     }).start();
-  }, [filterService, filterStatus, filterSort, sheetAnim]);
+  }, [filterService, filterStatus, filterSort, filterYear, filterMonth, filterDay, filterGroup, sheetAnim]);
 
   const closeFilterSheet = useCallback(() => {
     Animated.timing(sheetAnim, {
@@ -116,16 +164,24 @@ export default function OrdersScreen() {
     setFilterService(tempService);
     setFilterStatus(tempStatus);
     setFilterSort(tempSort);
+    setFilterYear(tempYear);
+    setFilterMonth(tempMonth);
+    setFilterDay(tempDay);
+    setFilterGroup(tempGroup);
     closeFilterSheet();
-  }, [tempService, tempStatus, tempSort, closeFilterSheet]);
+  }, [tempService, tempStatus, tempSort, tempYear, tempMonth, tempDay, tempGroup, closeFilterSheet]);
 
   const resetFilters = useCallback(() => {
     setTempService('Semua');
     setTempStatus('semua');
     setTempSort('terbaru');
+    setTempYear('Semua');
+    setTempMonth('Semua');
+    setTempDay('Semua');
+    setTempGroup('none');
   }, []);
 
-  const getOrdersForFilter = (filter: FilterType) => {
+  const getOrdersForFilter = (filter: FilterType): Order[] => {
     let filtered = orders;
     if (filter !== 'semua') {
       filtered = filtered.filter(order => order.paymentStatus === filter);
@@ -135,7 +191,8 @@ export default function OrdersScreen() {
       filtered = filtered.filter(
         order =>
           order.id.toLowerCase().includes(query) ||
-          order.customerName.toLowerCase().includes(query)
+          order.customerName.toLowerCase().includes(query) ||
+          order.customerPhone.toLowerCase().includes(query)
       );
     }
     if (filterService !== 'Semua') {
@@ -143,6 +200,16 @@ export default function OrdersScreen() {
     }
     if (filterStatus !== 'semua') {
       filtered = filtered.filter(order => order.status === filterStatus);
+    }
+    if (filterYear !== 'Semua') {
+      filtered = filtered.filter(order => new Date(order.createdAt).getFullYear().toString() === filterYear);
+    }
+    if (filterMonth !== 'Semua') {
+      const monthIdx = months.indexOf(filterMonth) - 1;
+      filtered = filtered.filter(order => new Date(order.createdAt).getMonth() === monthIdx);
+    }
+    if (filterDay !== 'Semua') {
+      filtered = filtered.filter(order => new Date(order.createdAt).getDate().toString() === filterDay);
     }
     switch (filterSort) {
       case 'terbaru':
@@ -159,6 +226,33 @@ export default function OrdersScreen() {
         break;
     }
     return filtered;
+  };
+
+  const getGroupedOrders = (filteredOrders: Order[]): { title: string; data: Order[] }[] => {
+    if (filterGroup === 'none') {
+      return [{ title: '', data: filteredOrders }];
+    }
+    const groups = new Map<string, Order[]>();
+    filteredOrders.forEach(order => {
+      let key = '';
+      switch (filterGroup) {
+        case 'nama':
+          key = order.customerName;
+          break;
+        case 'telepon':
+          key = order.customerPhone;
+          break;
+        case 'status':
+          key = getStatusLabel(order.status);
+          break;
+        case 'layanan':
+          key = order.serviceType;
+          break;
+      }
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(order);
+    });
+    return Array.from(groups.entries()).map(([title, data]) => ({ title, data }));
   };
 
   const handleOrderPress = (orderId: string) => {
@@ -284,26 +378,40 @@ export default function OrdersScreen() {
       >
         {filters.map((filter) => {
           const filterOrders = getOrdersForFilter(filter.key);
+          const sections = getGroupedOrders(filterOrders);
           return (
             <View key={filter.key} style={styles.page}>
               <ScrollView
                 contentContainerStyle={styles.ordersContent}
                 showsVerticalScrollIndicator={false}
               >
-                {filterOrders.map((order, idx) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    onPress={() => handleOrderPress(order.id)}
-                    isLast={idx === filterOrders.length - 1}
-                  />
-                ))}
-                {filterOrders.length === 0 && (
+                {filterOrders.length === 0 ? (
                   <View style={styles.emptyState}>
                     <ClipboardList size={48} color={colors.border} />
                     <Text style={styles.emptyTitle}>Tidak ada pesanan</Text>
                     <Text style={styles.emptyText}>Belum ada order untuk kategori ini</Text>
                   </View>
+                ) : (
+                  sections.map((section, sIdx) => (
+                    <View key={section.title || `section-${sIdx}`}>
+                      {section.title !== '' && (
+                        <View style={styles.sectionHeader}>
+                          <Text style={styles.sectionTitle}>{section.title}</Text>
+                          <View style={styles.sectionBadge}>
+                            <Text style={styles.sectionBadgeText}>{section.data.length}</Text>
+                          </View>
+                        </View>
+                      )}
+                      {section.data.map((order, idx) => (
+                        <OrderCard
+                          key={order.id}
+                          order={order}
+                          onPress={() => handleOrderPress(order.id)}
+                          isLast={idx === section.data.length - 1 && sIdx === sections.length - 1}
+                        />
+                      ))}
+                    </View>
+                  ))
                 )}
               </ScrollView>
             </View>
@@ -354,6 +462,79 @@ export default function OrdersScreen() {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.sheetScroll}>
+            <Text style={styles.sheetSectionTitle}>Tanggal Transaksi</Text>
+            <View style={styles.dateFilterRow}>
+              <View style={styles.datePickerCol}>
+                <Text style={styles.dateLabel}>Tahun</Text>
+                <ScrollView style={styles.dateScrollBox} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                  {availableYears.map((y) => (
+                    <TouchableOpacity
+                      key={y}
+                      style={[styles.dateOption, tempYear === y && styles.dateOptionActive]}
+                      onPress={() => {
+                        setTempYear(y);
+                        if (y === 'Semua') { setTempMonth('Semua'); setTempDay('Semua'); }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.dateOptionText, tempYear === y && styles.dateOptionTextActive]}>{y}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.datePickerCol}>
+                <Text style={styles.dateLabel}>Bulan</Text>
+                <ScrollView style={styles.dateScrollBox} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                  {months.map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.dateOption, tempMonth === m && styles.dateOptionActive, tempYear === 'Semua' && m !== 'Semua' && styles.dateOptionDisabled]}
+                      onPress={() => {
+                        if (tempYear === 'Semua' && m !== 'Semua') return;
+                        setTempMonth(m);
+                        if (m === 'Semua') setTempDay('Semua');
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.dateOptionText, tempMonth === m && styles.dateOptionTextActive, tempYear === 'Semua' && m !== 'Semua' && styles.dateOptionTextDisabled]}>{m.substring(0, 3)}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.datePickerCol}>
+                <Text style={styles.dateLabel}>Tanggal</Text>
+                <ScrollView style={styles.dateScrollBox} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                  {availableDays.map((d) => (
+                    <TouchableOpacity
+                      key={d}
+                      style={[styles.dateOption, tempDay === d && styles.dateOptionActive, (tempMonth === 'Semua' && d !== 'Semua') && styles.dateOptionDisabled]}
+                      onPress={() => {
+                        if (tempMonth === 'Semua' && d !== 'Semua') return;
+                        setTempDay(d);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.dateOptionText, tempDay === d && styles.dateOptionTextActive, (tempMonth === 'Semua' && d !== 'Semua') && styles.dateOptionTextDisabled]}>{d}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+
+            <Text style={styles.sheetSectionTitle}>Kelompokkan Berdasarkan</Text>
+            <View style={styles.chipRow}>
+              {groupOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[styles.chip, tempGroup === opt.key && styles.chipActive]}
+                  onPress={() => setTempGroup(opt.key)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.chipText, tempGroup === opt.key && styles.chipTextActive]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <Text style={styles.sheetSectionTitle}>Jenis Layanan</Text>
             <View style={styles.chipRow}>
               {serviceTypes.map((svc) => (
@@ -646,8 +827,80 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: colors.primary,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.surfaceSecondary,
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.3,
+  },
+  sectionBadge: {
+    backgroundColor: colors.primaryBg,
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: 8,
+  },
+  sectionBadgeText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: colors.primary,
+  },
   sheetScroll: {
     paddingHorizontal: 20,
+  },
+  dateFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 4,
+  },
+  datePickerCol: {
+    flex: 1,
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: colors.textTertiary,
+    marginBottom: 6,
+    textAlign: 'center' as const,
+  },
+  dateScrollBox: {
+    maxHeight: 120,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: 10,
+    padding: 4,
+  },
+  dateOption: {
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    alignItems: 'center' as const,
+    marginBottom: 2,
+  },
+  dateOptionActive: {
+    backgroundColor: colors.primary,
+  },
+  dateOptionDisabled: {
+    opacity: 0.35,
+  },
+  dateOptionText: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  dateOptionTextActive: {
+    color: colors.white,
+    fontWeight: '600' as const,
+  },
+  dateOptionTextDisabled: {
+    color: colors.textTertiary,
   },
   sheetSectionTitle: {
     fontSize: 13,
