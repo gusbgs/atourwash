@@ -155,6 +155,14 @@ function RootLayoutNav() {
         name="laporan-karyawan" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="broadcast" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="broadcast-send" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

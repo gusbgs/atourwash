@@ -61,3 +61,21 @@ export interface Branch {
   name: string;
   address: string;
 }
+
+export interface BroadcastTemplate {
+  id: string;
+  name: string;
+  message: string;
+  category: 'promo' | 'info' | 'ucapan' | 'lainnya';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BroadcastHistory {
+  id: string;
+  templateId: string;
+  templateName: string;
+  recipientCount: number;
+  sentAt: string;
+  status: 'terkirim' | 'gagal' | 'sebagian';
+}

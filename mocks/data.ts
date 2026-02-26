@@ -1,4 +1,4 @@
-import { Order, Service, User, ShiftInfo, DashboardStats, Branch } from '@/types';
+import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -96,6 +96,68 @@ export const mockServiceDistribution = [
   { label: 'Dry Clean', value: 15, color: '#F59E0B' },
   { label: 'Setrika Saja', value: 10, color: '#8B5CF6' },
   { label: 'Lainnya', value: 5, color: '#94A3B8' },
+];
+
+export const mockBroadcastTemplates: BroadcastTemplate[] = [
+  {
+    id: 'bt1',
+    name: 'Promo Akhir Pekan',
+    message: 'Halo {nama}! 🎉 Spesial weekend ini, nikmati DISKON 20% untuk semua layanan cuci di AtourWash. Berlaku s/d hari Minggu. Yuk, segera kunjungi outlet terdekat!',
+    category: 'promo',
+    createdAt: '2024-01-10T08:00:00Z',
+    updatedAt: '2024-01-10T08:00:00Z',
+  },
+  {
+    id: 'bt2',
+    name: 'Pesanan Siap Diambil',
+    message: 'Halo {nama}, pesanan laundry Anda sudah selesai dan siap diambil di outlet kami. Terima kasih telah menggunakan AtourWash! 😊',
+    category: 'info',
+    createdAt: '2024-01-12T10:00:00Z',
+    updatedAt: '2024-01-12T10:00:00Z',
+  },
+  {
+    id: 'bt3',
+    name: 'Ucapan Ulang Tahun',
+    message: 'Selamat Ulang Tahun, {nama}! 🎂 Sebagai hadiah dari kami, Anda mendapat voucher FREE cuci 3kg. Berlaku 7 hari. Semoga harimu menyenangkan!',
+    category: 'ucapan',
+    createdAt: '2024-01-15T09:00:00Z',
+    updatedAt: '2024-01-15T09:00:00Z',
+  },
+  {
+    id: 'bt4',
+    name: 'Promo Member Baru',
+    message: 'Hai {nama}! Terima kasih sudah menjadi pelanggan setia AtourWash. Dapatkan CASHBACK 15% untuk transaksi berikutnya dengan kode MEMBER15. Jangan lewatkan! 💚',
+    category: 'promo',
+    createdAt: '2024-01-18T11:00:00Z',
+    updatedAt: '2024-01-18T11:00:00Z',
+  },
+];
+
+export const mockBroadcastHistory: BroadcastHistory[] = [
+  {
+    id: 'bh1',
+    templateId: 'bt1',
+    templateName: 'Promo Akhir Pekan',
+    recipientCount: 24,
+    sentAt: '2024-01-20T10:00:00Z',
+    status: 'terkirim',
+  },
+  {
+    id: 'bh2',
+    templateId: 'bt3',
+    templateName: 'Ucapan Ulang Tahun',
+    recipientCount: 3,
+    sentAt: '2024-01-19T08:30:00Z',
+    status: 'terkirim',
+  },
+  {
+    id: 'bh3',
+    templateId: 'bt4',
+    templateName: 'Promo Member Baru',
+    recipientCount: 15,
+    sentAt: '2024-01-18T14:00:00Z',
+    status: 'sebagian',
+  },
 ];
 
 export const mockOrders: Order[] = [
