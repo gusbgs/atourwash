@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { User, Clock, ChevronRight } from '@/utils/icons';
+import { User, Clock, ChevronRight, Phone } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { Order } from '@/types';
 import { PaymentBadge } from './PaymentBadge';
@@ -42,6 +42,9 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
           <View style={styles.customerRow}>
             <User size={13} color={colors.textTertiary} />
             <Text style={styles.customerName}>{order.customerName}</Text>
+            <View style={styles.phoneSeparator} />
+            <Phone size={12} color={colors.textTertiary} />
+            <Text style={styles.customerPhone}>{order.customerPhone}</Text>
           </View>
           <View style={styles.bottomRow}>
             <Text style={styles.priceValue}>{formatFullCurrency(order.totalPrice)}</Text>
@@ -102,6 +105,16 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 13,
     color: colors.textSecondary,
+  },
+  phoneSeparator: {
+    width: 1,
+    height: 10,
+    backgroundColor: colors.border,
+    marginHorizontal: 6,
+  },
+  customerPhone: {
+    fontSize: 12,
+    color: colors.textTertiary,
   },
   bottomRow: {
     flexDirection: 'row',
