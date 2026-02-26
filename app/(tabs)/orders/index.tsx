@@ -203,11 +203,12 @@ export default function OrdersScreen() {
                 contentContainerStyle={styles.ordersContent}
                 showsVerticalScrollIndicator={false}
               >
-                {filterOrders.map(order => (
+                {filterOrders.map((order, idx) => (
                   <OrderCard
                     key={order.id}
                     order={order}
                     onPress={() => handleOrderPress(order.id)}
+                    isLast={idx === filterOrders.length - 1}
                   />
                 ))}
                 {filterOrders.length === 0 && (
@@ -374,8 +375,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ordersContent: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 100,
     gap: 0,
   },

@@ -9,10 +9,11 @@ import { formatFullCurrency } from '@/utils/format';
 interface OrderCardProps {
   order: Order;
   onPress?: () => void;
+  isLast?: boolean;
 }
 
-export function OrderCard({ order, onPress }: OrderCardProps) {
-  const getStatusLineColor = () => {
+export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
+  const getStatusColor = () => {
     switch (order.paymentStatus) {
       case 'lunas':
         return colors.paymentLunas;
@@ -26,115 +27,98 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
   };
 
   return (
-    <TouchableOpacity 
-      style={styles.card} 
+    <TouchableOpacity
+      style={styles.row}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.6}
     >
-      <View style={[styles.statusLine, { backgroundColor: getStatusLineColor() }]} />
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
+      <View style={[styles.indicator, { backgroundColor: getStatusColor() }]} />
+      <View style={[styles.content, !isLast && styles.contentBorder]}>
+        <View style={styles.mainInfo}>
+          <View style={styles.topRow}>
             <Text style={styles.orderId}>{order.id}</Text>
-            <Text style={styles.serviceType}>{order.serviceType}</Text>
+            <PaymentBadge status={order.paymentStatus} />
           </View>
-          <PaymentBadge status={order.paymentStatus} />
-        </View>
-        
-        <View style={styles.customerRow}>
-          <User size={14} color={colors.textSecondary} />
-          <Text style={styles.customerName}>{order.customerName}</Text>
-        </View>
-        
-        <View style={styles.footer}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceLabel}>Total</Text>
+          <Text style={styles.serviceType}>{order.serviceType}</Text>
+          <View style={styles.customerRow}>
+            <User size={13} color={colors.textTertiary} />
+            <Text style={styles.customerName}>{order.customerName}</Text>
+          </View>
+          <View style={styles.bottomRow}>
             <Text style={styles.priceValue}>{formatFullCurrency(order.totalPrice)}</Text>
-          </View>
-          <View style={styles.pickupContainer}>
-            <Clock size={14} color={colors.textTertiary} />
-            <Text style={styles.pickupText}>Ambil {order.pickupTime}</Text>
+            <View style={styles.pickupContainer}>
+              <Clock size={12} color={colors.textTertiary} />
+              <Text style={styles.pickupText}>{order.pickupTime}</Text>
+            </View>
           </View>
         </View>
+        <ChevronRight size={18} color={colors.textTertiary} />
       </View>
-      <ChevronRight size={20} color={colors.textTertiary} />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
-    overflow: 'hidden',
+    alignItems: 'stretch',
+    backgroundColor: colors.white,
   },
-  statusLine: {
+  indicator: {
     width: 4,
-    height: '100%',
-    position: 'absolute' as const,
-    left: 0,
-    top: 0,
-    bottom: 0,
+    borderRadius: 2,
+    marginLeft: 16,
+    marginVertical: 12,
   },
   content: {
     flex: 1,
-    padding: 16,
-    paddingLeft: 20,
-  },
-  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingRight: 16,
+    paddingLeft: 12,
+    marginLeft: 0,
   },
-  headerLeft: {
+  contentBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  mainInfo: {
     flex: 1,
   },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   orderId: {
-    fontSize: 16,
-    fontWeight: '700' as const,
+    fontSize: 15,
+    fontWeight: '600' as const,
     color: colors.text,
   },
   serviceType: {
     fontSize: 12,
     color: colors.textTertiary,
-    marginTop: 2,
+    marginBottom: 4,
   },
   customerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 12,
+    gap: 5,
+    marginBottom: 6,
   },
   customerName: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
   },
-  footer: {
+  bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  priceContainer: {
-    flex: 1,
-  },
-  priceLabel: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    marginBottom: 2,
-  },
   priceValue: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700' as const,
     color: colors.text,
   },
@@ -144,7 +128,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   pickupText: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textTertiary,
   },
 });
