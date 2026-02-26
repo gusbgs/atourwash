@@ -116,6 +116,10 @@ function RootLayoutNav() {
         options={{ headerShown: false }} 
       />
       <Stack.Screen 
+        name="inventaris-detail" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
         name="laporan" 
         options={{ headerShown: false }} 
       />

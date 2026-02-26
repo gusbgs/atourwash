@@ -79,3 +79,31 @@ export interface BroadcastHistory {
   sentAt: string;
   status: 'terkirim' | 'gagal' | 'sebagian';
 }
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  stock: number;
+  unit: string;
+  minStock: number;
+  category: string;
+  price?: number;
+  supplier?: string;
+  location?: string;
+  createdAt: string;
+}
+
+export type StockMovementType = 'masuk' | 'keluar';
+
+export interface StockMovement {
+  id: string;
+  itemId: string;
+  itemName: string;
+  type: StockMovementType;
+  quantity: number;
+  unit: string;
+  note: string;
+  date: string;
+  balanceBefore: number;
+  balanceAfter: number;
+}

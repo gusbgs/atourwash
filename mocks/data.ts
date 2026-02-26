@@ -1,4 +1,4 @@
-import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory } from '@/types';
+import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -158,6 +158,31 @@ export const mockBroadcastHistory: BroadcastHistory[] = [
     sentAt: '2024-01-18T14:00:00Z',
     status: 'sebagian',
   },
+];
+
+export const mockInventoryItems: InventoryItem[] = [
+  { id: '1', name: 'Deterjen Bubuk', stock: 25, unit: 'kg', minStock: 10, category: 'Bahan Cuci', price: 35000, supplier: 'PT Kimia Jaya', location: 'Rak A1', createdAt: '2024-01-05T08:00:00Z' },
+  { id: '2', name: 'Pewangi Lavender', stock: 8, unit: 'liter', minStock: 5, category: 'Pewangi', price: 28000, supplier: 'CV Aroma Sejati', location: 'Rak B2', createdAt: '2024-01-05T08:00:00Z' },
+  { id: '3', name: 'Pemutih', stock: 3, unit: 'liter', minStock: 5, category: 'Bahan Cuci', price: 22000, supplier: 'PT Kimia Jaya', location: 'Rak A2', createdAt: '2024-01-06T08:00:00Z' },
+  { id: '4', name: 'Plastik Packing (Besar)', stock: 150, unit: 'lembar', minStock: 50, category: 'Packing', price: 500, supplier: 'UD Plastik Makmur', location: 'Rak C1', createdAt: '2024-01-06T08:00:00Z' },
+  { id: '5', name: 'Plastik Packing (Kecil)', stock: 40, unit: 'lembar', minStock: 50, category: 'Packing', price: 300, supplier: 'UD Plastik Makmur', location: 'Rak C2', createdAt: '2024-01-07T08:00:00Z' },
+  { id: '6', name: 'Pewangi Rose', stock: 12, unit: 'liter', minStock: 5, category: 'Pewangi', price: 30000, supplier: 'CV Aroma Sejati', location: 'Rak B3', createdAt: '2024-01-07T08:00:00Z' },
+  { id: '7', name: 'Softener', stock: 6, unit: 'liter', minStock: 5, category: 'Bahan Cuci', price: 25000, supplier: 'PT Kimia Jaya', location: 'Rak A3', createdAt: '2024-01-08T08:00:00Z' },
+];
+
+export const mockStockMovements: StockMovement[] = [
+  { id: 'sm1', itemId: '1', itemName: 'Deterjen Bubuk', type: 'masuk', quantity: 10, unit: 'kg', note: 'Pembelian dari PT Kimia Jaya', date: '2024-01-20T09:00:00Z', balanceBefore: 15, balanceAfter: 25 },
+  { id: 'sm2', itemId: '1', itemName: 'Deterjen Bubuk', type: 'keluar', quantity: 3, unit: 'kg', note: 'Pemakaian harian', date: '2024-01-19T14:00:00Z', balanceBefore: 18, balanceAfter: 15 },
+  { id: 'sm3', itemId: '2', itemName: 'Pewangi Lavender', type: 'masuk', quantity: 5, unit: 'liter', note: 'Restock dari CV Aroma Sejati', date: '2024-01-18T10:30:00Z', balanceBefore: 3, balanceAfter: 8 },
+  { id: 'sm4', itemId: '2', itemName: 'Pewangi Lavender', type: 'keluar', quantity: 2, unit: 'liter', note: 'Pemakaian cuci express', date: '2024-01-17T16:00:00Z', balanceBefore: 5, balanceAfter: 3 },
+  { id: 'sm5', itemId: '3', itemName: 'Pemutih', type: 'keluar', quantity: 2, unit: 'liter', note: 'Pemakaian cuci putih', date: '2024-01-19T11:00:00Z', balanceBefore: 5, balanceAfter: 3 },
+  { id: 'sm6', itemId: '4', itemName: 'Plastik Packing (Besar)', type: 'masuk', quantity: 100, unit: 'lembar', note: 'Pembelian UD Plastik Makmur', date: '2024-01-18T08:00:00Z', balanceBefore: 50, balanceAfter: 150 },
+  { id: 'sm7', itemId: '5', itemName: 'Plastik Packing (Kecil)', type: 'keluar', quantity: 30, unit: 'lembar', note: 'Pemakaian packing harian', date: '2024-01-20T15:00:00Z', balanceBefore: 70, balanceAfter: 40 },
+  { id: 'sm8', itemId: '6', itemName: 'Pewangi Rose', type: 'masuk', quantity: 8, unit: 'liter', note: 'Restock dari CV Aroma Sejati', date: '2024-01-17T09:00:00Z', balanceBefore: 4, balanceAfter: 12 },
+  { id: 'sm9', itemId: '7', itemName: 'Softener', type: 'masuk', quantity: 4, unit: 'liter', note: 'Pembelian dari PT Kimia Jaya', date: '2024-01-16T10:00:00Z', balanceBefore: 2, balanceAfter: 6 },
+  { id: 'sm10', itemId: '1', itemName: 'Deterjen Bubuk', type: 'keluar', quantity: 5, unit: 'kg', note: 'Pemakaian order besar', date: '2024-01-18T13:00:00Z', balanceBefore: 23, balanceAfter: 18 },
+  { id: 'sm11', itemId: '3', itemName: 'Pemutih', type: 'masuk', quantity: 3, unit: 'liter', note: 'Pembelian dari PT Kimia Jaya', date: '2024-01-15T08:00:00Z', balanceBefore: 2, balanceAfter: 5 },
+  { id: 'sm12', itemId: '7', itemName: 'Softener', type: 'keluar', quantity: 1.5, unit: 'liter', note: 'Pemakaian cuci reguler', date: '2024-01-19T10:00:00Z', balanceBefore: 7.5, balanceAfter: 6 },
 ];
 
 export const mockOrders: Order[] = [
