@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, ScrollView, Animated } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, Package, AlertCircle, Plus, X, Trash2, Pencil, Minus, ArrowUpRight, ArrowDownLeft } from '@/utils/icons';
+import { ArrowLeft, Search, Package, AlertCircle, Plus, X, Minus, ArrowUpRight, ArrowDownLeft } from '@/utils/icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/constants/colors';
 import { InventoryItem, StockMovement } from '@/types';
@@ -15,12 +15,25 @@ const CATEGORIES = ['Bahan Cuci', 'Pewangi', 'Packing', 'Lainnya'];
 type TabType = 'barang' | 'riwayat';
 type HistoryFilter = 'semua' | 'masuk' | 'keluar';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const tabs: { key: TabType; label: string; icon: React.FC<{ size?: number; color?: string }> }[] = [
+  { key: 'barang', label: 'Daftar Barang', icon: Package },
+  { key: 'riwayat', label: 'Riwayat Stok', icon: ArrowUpRight },
+];
+
+const historyFilters: { key: HistoryFilter; label: string }[] = [
+  { key: 'semua', label: 'Semua' },
+  { key: 'masuk', label: 'Masuk' },
+  { key: 'keluar', label: 'Keluar' },
+];
+
 export default function InventarisScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<InventoryItem[]>(mockInventoryItems);
   const [movements, setMovements] = useState<StockMovement[]>(mockStockMovements);
-  const [activeTab, setActiveTab] = useState<TabType>('barang');
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('semua');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
@@ -38,7 +51,8 @@ export default function InventarisScreen() {
   const [formSupplier, setFormSupplier] = useState('');
   const [formLocation, setFormLocation] = useState('');
 
-  const [tabIndicator] = useState(new Animated.Value(0));
+  const indicatorAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -54,14 +68,14 @@ export default function InventarisScreen() {
     load();
   }, []);
 
-  useEffect(() => {
-    Animated.spring(tabIndicator, {
-      toValue: activeTab === 'barang' ? 0 : 1,
+  const animateIndicator = useCallback((index: number) => {
+    Animated.spring(indicatorAnim, {
+      toValue: index,
       useNativeDriver: true,
-      tension: 300,
-      friction: 30,
+      tension: 68,
+      friction: 12,
     }).start();
-  }, [activeTab, tabIndicator]);
+  }, [indicatorAnim]);
 
   const persistItems = useCallback(async (data: InventoryItem[]) => {
     setItems(data);
@@ -195,7 +209,6 @@ export default function InventarisScreen() {
   }, [movements, historyFilter, search]);
 
   const lowStock = useMemo(() => items.filter(i => i.stock <= i.minStock).length, [items]);
-
   const totalMasuk = useMemo(() => movements.filter(m => m.type === 'masuk').length, [movements]);
   const totalKeluar = useMemo(() => movements.filter(m => m.type === 'keluar').length, [movements]);
 
@@ -209,10 +222,37 @@ export default function InventarisScreen() {
     return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   }, []);
 
-  const renderItem = useCallback(({ item }: { item: InventoryItem }) => {
+  const handleTabPress = useCallback((index: number) => {
+    setActiveTabIndex(index);
+    animateIndicator(index);
+    scrollViewRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
+  }, [animateIndicator]);
+
+  const handleScroll = useCallback((event: any) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / SCREEN_WIDTH);
+    if (index !== activeTabIndex && index >= 0 && index < tabs.length) {
+      setActiveTabIndex(index);
+      animateIndicator(index);
+    }
+  }, [activeTabIndex, animateIndicator]);
+
+  const tabWidth = SCREEN_WIDTH / tabs.length;
+  const indicatorTranslateX = indicatorAnim.interpolate({
+    inputRange: tabs.map((_, i) => i),
+    outputRange: tabs.map((_, i) => i * tabWidth),
+  });
+
+  const getTabCount = useCallback((key: TabType) => {
+    if (key === 'barang') return items.length;
+    return movements.length;
+  }, [items.length, movements.length]);
+
+  const renderItemCard = useCallback((item: InventoryItem) => {
     const isLow = item.stock <= item.minStock;
     return (
       <TouchableOpacity
+        key={item.id}
         style={styles.card}
         activeOpacity={0.7}
         onPress={() => router.push(`/inventaris-detail?id=${item.id}` as any)}
@@ -221,7 +261,7 @@ export default function InventarisScreen() {
           {isLow ? <AlertCircle size={20} color="#EF4444" /> : <Package size={20} color={colors.primary} />}
         </View>
         <View style={styles.cardContent}>
-          <Text style={styles.cardName}>{item.name}</Text>
+          <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.cardCategory}>{item.category}</Text>
         </View>
         <View style={styles.stockInfo}>
@@ -232,10 +272,11 @@ export default function InventarisScreen() {
     );
   }, [router]);
 
-  const renderMovement = useCallback(({ item }: { item: StockMovement }) => {
+  const renderMovementCard = useCallback((item: StockMovement) => {
     const isMasuk = item.type === 'masuk';
     return (
       <TouchableOpacity
+        key={item.id}
         style={styles.movementCard}
         activeOpacity={0.7}
         onPress={() => router.push(`/inventaris-detail?id=${item.itemId}` as any)}
@@ -245,7 +286,7 @@ export default function InventarisScreen() {
         </View>
         <View style={styles.movementContent}>
           <View style={styles.movementHeader}>
-            <Text style={styles.movementItemName}>{item.itemName}</Text>
+            <Text style={styles.movementItemName} numberOfLines={1}>{item.itemName}</Text>
             <Text style={[styles.movementQty, { color: isMasuk ? colors.primary : '#EF4444' }]}>
               {isMasuk ? '+' : '-'}{item.quantity} {item.unit}
             </Text>
@@ -265,125 +306,153 @@ export default function InventarisScreen() {
     );
   }, [formatDate, formatTime, router]);
 
-  const tabTranslateX = tabIndicator.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.headerInner}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-              <ArrowLeft size={22} color={colors.white} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Inventaris</Text>
-            <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
-              <Plus size={22} color={colors.white} />
+      <SafeAreaView edges={['top']} style={styles.safeTop}>
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>Inventaris</Text>
+              <Text style={styles.subtitle}>Kelola stok & barang</Text>
+            </View>
+            <TouchableOpacity style={styles.addBtn} onPress={openAdd} activeOpacity={0.7}>
+              <Plus size={20} color={colors.white} />
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
-      </View>
-
-      {lowStock > 0 && (
-        <View style={styles.alertBanner}>
-          <AlertCircle size={16} color="#EF4444" />
-          <Text style={styles.alertText}>{lowStock} item stok rendah / habis</Text>
         </View>
-      )}
 
-      <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { borderLeftColor: colors.primary }]}>
-          <Text style={styles.summaryNum}>{items.length}</Text>
-          <Text style={styles.summaryLabel}>Total Barang</Text>
+        {lowStock > 0 && (
+          <View style={styles.alertBanner}>
+            <AlertCircle size={16} color="#EF4444" />
+            <Text style={styles.alertText}>{lowStock} item stok rendah / habis</Text>
+          </View>
+        )}
+
+        <View style={styles.summaryRow}>
+          <View style={[styles.summaryCard, { borderLeftColor: colors.primary }]}>
+            <Text style={styles.summaryNum}>{items.length}</Text>
+            <Text style={styles.summaryLabel}>Total Barang</Text>
+          </View>
+          <View style={[styles.summaryCard, { borderLeftColor: colors.info }]}>
+            <Text style={styles.summaryNum}>{totalMasuk}</Text>
+            <Text style={styles.summaryLabel}>Stok Masuk</Text>
+          </View>
+          <View style={[styles.summaryCard, { borderLeftColor: colors.error }]}>
+            <Text style={styles.summaryNum}>{totalKeluar}</Text>
+            <Text style={styles.summaryLabel}>Stok Keluar</Text>
+          </View>
         </View>
-        <View style={[styles.summaryCard, { borderLeftColor: colors.info }]}>
-          <Text style={styles.summaryNum}>{totalMasuk}</Text>
-          <Text style={styles.summaryLabel}>Stok Masuk</Text>
+
+        <View style={styles.searchContainer}>
+          <Search size={20} color={colors.textTertiary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={activeTabIndex === 0 ? 'Cari barang...' : 'Cari riwayat stok...'}
+            placeholderTextColor={colors.textTertiary}
+            value={search}
+            onChangeText={setSearch}
+          />
         </View>
-        <View style={[styles.summaryCard, { borderLeftColor: colors.error }]}>
-          <Text style={styles.summaryNum}>{totalKeluar}</Text>
-          <Text style={styles.summaryLabel}>Stok Keluar</Text>
+
+        <View style={styles.tabRow}>
+          {tabs.map((tab, index) => {
+            const count = getTabCount(tab.key);
+            const isActive = activeTabIndex === index;
+            const IconComp = tab.icon;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.tabItem}
+                onPress={() => handleTabPress(index)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.tabContent}>
+                  <IconComp size={16} color={isActive ? colors.primary : colors.textSecondary} />
+                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                    {tab.label}
+                  </Text>
+                  {count > 0 && (
+                    <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                      <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
+                        {count}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+          <Animated.View
+            style={[
+              styles.tabIndicator,
+              {
+                width: tabWidth - 24,
+                transform: [{ translateX: Animated.add(indicatorTranslateX, 12) }],
+              },
+            ]}
+          />
         </View>
-      </View>
+      </SafeAreaView>
 
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'barang' && styles.tabActive]}
-          onPress={() => setActiveTab('barang')}
-          activeOpacity={0.7}
-        >
-          <Package size={16} color={activeTab === 'barang' ? colors.primary : colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'barang' && styles.tabTextActive]}>Daftar Barang</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'riwayat' && styles.tabActive]}
-          onPress={() => setActiveTab('riwayat')}
-          activeOpacity={0.7}
-        >
-          <ArrowUpRight size={16} color={activeTab === 'riwayat' ? colors.primary : colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'riwayat' && styles.tabTextActive]}>Riwayat Stok</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.searchBox}>
-        <Search size={18} color={colors.textSecondary} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder={activeTab === 'barang' ? 'Cari barang...' : 'Cari riwayat stok...'}
-          placeholderTextColor={colors.textSecondary}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
-
-      {activeTab === 'riwayat' && (
-        <View style={styles.filterRow}>
-          {(['semua', 'masuk', 'keluar'] as HistoryFilter[]).map(f => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterChip, historyFilter === f && styles.filterChipActive]}
-              onPress={() => setHistoryFilter(f)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.filterChipText, historyFilter === f && styles.filterChipTextActive]}>
-                {f === 'semua' ? 'Semua' : f === 'masuk' ? 'Masuk' : 'Keluar'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        style={styles.pagerContainer}
+      >
+        <View style={styles.page}>
+          <ScrollView
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {filtered.length === 0 ? (
+              <View style={styles.empty}>
+                <Package size={48} color={colors.border} />
+                <Text style={styles.emptyTitle}>Tidak ada barang ditemukan</Text>
+                <Text style={styles.emptyText}>Tambah barang baru untuk memulai</Text>
+              </View>
+            ) : (
+              filtered.map(item => renderItemCard(item))
+            )}
+          </ScrollView>
         </View>
-      )}
 
-      {activeTab === 'barang' ? (
-        <FlatList
-          data={filtered}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Package size={48} color={colors.border} />
-              <Text style={styles.emptyText}>Tidak ada barang ditemukan</Text>
-            </View>
-          }
-        />
-      ) : (
-        <FlatList
-          data={filteredMovements}
-          keyExtractor={item => item.id}
-          renderItem={renderMovement}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <ArrowUpRight size={48} color={colors.border} />
-              <Text style={styles.emptyText}>Belum ada riwayat stok</Text>
-            </View>
-          }
-        />
-      )}
+        <View style={styles.page}>
+          <ScrollView
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {activeTabIndex === 1 && (
+              <View style={styles.filterRow}>
+                {historyFilters.map(f => (
+                  <TouchableOpacity
+                    key={f.key}
+                    style={[styles.filterChip, historyFilter === f.key && styles.filterChipActive]}
+                    onPress={() => setHistoryFilter(f.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.filterChipText, historyFilter === f.key && styles.filterChipTextActive]}>
+                      {f.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            {filteredMovements.length === 0 ? (
+              <View style={styles.empty}>
+                <ArrowUpRight size={48} color={colors.border} />
+                <Text style={styles.emptyTitle}>Belum ada riwayat stok</Text>
+                <Text style={styles.emptyText}>Riwayat akan muncul setelah ada perubahan stok</Text>
+              </View>
+            ) : (
+              filteredMovements.map(item => renderMovementCard(item))
+            )}
+          </ScrollView>
+        </View>
+      </ScrollView>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -492,77 +561,488 @@ export default function InventarisScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: { backgroundColor: colors.primary },
-  headerInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' as const, color: colors.white },
-  alertBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF2F2', marginHorizontal: 16, marginTop: 12, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
-  alertText: { fontSize: 13, fontWeight: '500' as const, color: '#EF4444' },
-  summaryRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 12 },
-  summaryCard: { flex: 1, backgroundColor: colors.white, borderRadius: 12, padding: 12, borderLeftWidth: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  summaryNum: { fontSize: 20, fontWeight: '800' as const, color: colors.text },
-  summaryLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
-  tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginTop: 14, backgroundColor: colors.white, borderRadius: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
-  tabActive: { backgroundColor: colors.primaryBg },
-  tabText: { fontSize: 13, fontWeight: '600' as const, color: colors.textSecondary },
-  tabTextActive: { color: colors.primary },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingHorizontal: 14, gap: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: 14, color: colors.text },
-  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 10 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
-  filterChipActive: { backgroundColor: colors.primaryBg, borderColor: colors.primary },
-  filterChipText: { fontSize: 12, fontWeight: '500' as const, color: colors.textSecondary },
-  filterChipTextActive: { color: colors.primary, fontWeight: '600' as const },
-  list: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 40 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  iconBox: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  cardContent: { flex: 1, gap: 2 },
-  cardName: { fontSize: 14, fontWeight: '600' as const, color: colors.text },
-  cardCategory: { fontSize: 12, color: colors.textSecondary },
-  stockInfo: { alignItems: 'center' },
-  stockValue: { fontSize: 18, fontWeight: '700' as const, color: colors.text },
-  stockUnit: { fontSize: 11, color: colors.textSecondary },
-  movementCard: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 14, padding: 14, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  movementIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  movementContent: { flex: 1 },
-  movementHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  movementItemName: { fontSize: 14, fontWeight: '600' as const, color: colors.text, flex: 1 },
-  movementQty: { fontSize: 15, fontWeight: '700' as const },
-  movementNote: { fontSize: 12, color: colors.textSecondary, marginTop: 3 },
-  movementFooter: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  movementDate: { fontSize: 11, color: colors.textTertiary },
-  movementTime: { fontSize: 11, color: colors.textTertiary },
-  movementBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  movementBadgeText: { fontSize: 10, fontWeight: '600' as const },
-  empty: { alignItems: 'center', marginTop: 60, gap: 12 },
-  emptyText: { fontSize: 14, color: colors.textSecondary },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  modalTitle: { fontSize: 17, fontWeight: '700' as const, color: colors.text },
-  modalBody: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
-  label: { fontSize: 13, fontWeight: '600' as const, color: colors.textSecondary, marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: colors.background, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: colors.text, borderWidth: 1, borderColor: colors.border },
-  categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
-  categoryChipActive: { backgroundColor: colors.primaryBg, borderColor: colors.primary },
-  categoryChipText: { fontSize: 13, color: colors.textSecondary },
-  categoryChipTextActive: { color: colors.primary, fontWeight: '600' as const },
-  row: { flexDirection: 'row', gap: 12 },
-  halfField: { flex: 1 },
-  saveBtn: { backgroundColor: colors.primary, marginHorizontal: 20, marginVertical: 16, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
-  saveBtnText: { fontSize: 15, fontWeight: '700' as const, color: colors.white },
-  stockOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
-  stockContent: { backgroundColor: colors.white, borderRadius: 24, width: '85%', maxWidth: 400 },
-  stockBody: { padding: 20, alignItems: 'center' },
-  stockItemName: { fontSize: 17, fontWeight: '700' as const, color: colors.text, marginBottom: 4 },
-  stockCurrent: { fontSize: 14, color: colors.textSecondary, marginBottom: 20 },
-  stockInput: { backgroundColor: colors.background, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, fontSize: 20, fontWeight: '700' as const, color: colors.text, borderWidth: 1, borderColor: colors.border, textAlign: 'center', width: '100%', marginBottom: 12 },
-  stockActions: { flexDirection: 'row', gap: 12, width: '100%' },
-  stockSubtractBtn: { flex: 1, flexDirection: 'row', gap: 6, backgroundColor: colors.error, borderRadius: 14, paddingVertical: 14, justifyContent: 'center', alignItems: 'center' },
-  stockAddBtn: { flex: 1, flexDirection: 'row', gap: 6, backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, justifyContent: 'center', alignItems: 'center' },
-  stockActionText: { fontSize: 15, fontWeight: '600' as const, color: colors.white },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  safeTop: {
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  addBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  alertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
+    marginHorizontal: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  alertText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: '#EF4444',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 12,
+    borderLeftWidth: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  summaryNum: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: colors.text,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    marginHorizontal: 20,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    color: colors.text,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    position: 'relative' as const,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 14,
+  },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  tabTextActive: {
+    color: colors.primary,
+    fontWeight: '600' as const,
+  },
+  tabBadge: {
+    backgroundColor: colors.surfaceSecondary,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 8,
+    minWidth: 18,
+    alignItems: 'center',
+  },
+  tabBadgeActive: {
+    backgroundColor: colors.primaryBg,
+  },
+  tabBadgeText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+  },
+  tabBadgeTextActive: {
+    color: colors.primary,
+  },
+  tabIndicator: {
+    position: 'absolute' as const,
+    bottom: 0,
+    height: 2.5,
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  pagerContainer: {
+    flex: 1,
+  },
+  page: {
+    width: SCREEN_WIDTH,
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 100,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: colors.primaryBg,
+    borderColor: colors.primary,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  filterChipTextActive: {
+    color: colors.primary,
+    fontWeight: '600' as const,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  iconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  cardContent: {
+    flex: 1,
+    gap: 2,
+  },
+  cardName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  cardCategory: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  stockInfo: {
+    alignItems: 'center',
+  },
+  stockValue: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  stockUnit: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  movementCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  movementIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  movementContent: {
+    flex: 1,
+  },
+  movementHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  movementItemName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.text,
+    flex: 1,
+  },
+  movementQty: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+  },
+  movementNote: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 3,
+  },
+  movementFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  movementDate: {
+    fontSize: 11,
+    color: colors.textTertiary,
+  },
+  movementTime: {
+    fontSize: 11,
+    color: colors.textTertiary,
+  },
+  movementBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  movementBadgeText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+  },
+  empty: {
+    alignItems: 'center',
+    marginTop: 60,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.text,
+    marginTop: 8,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  categoryChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryChipActive: {
+    backgroundColor: colors.primaryBg,
+    borderColor: colors.primary,
+  },
+  categoryChipText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  categoryChipTextActive: {
+    color: colors.primary,
+    fontWeight: '600' as const,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfField: {
+    flex: 1,
+  },
+  saveBtn: {
+    backgroundColor: colors.primary,
+    marginHorizontal: 20,
+    marginVertical: 16,
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: colors.white,
+  },
+  stockOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stockContent: {
+    backgroundColor: colors.white,
+    borderRadius: 24,
+    width: '85%',
+    maxWidth: 400,
+  },
+  stockBody: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  stockItemName: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  stockCurrent: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 20,
+  },
+  stockInput: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: 12,
+  },
+  stockActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  stockSubtractBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    backgroundColor: colors.error,
+    borderRadius: 14,
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stockAddBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stockActionText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.white,
+  },
 });
