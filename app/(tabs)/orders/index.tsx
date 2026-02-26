@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Search, ClipboardList, Clock, Wallet, Check, X, Settings } from '@/utils/icons';
+import { Search, ClipboardList, Clock, Wallet, Check, X, Settings, FilterHorizontal } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { OrderCard } from '@/components/OrderCard';
@@ -164,20 +164,25 @@ export default function OrdersScreen() {
       </View>
 
       <View style={styles.searchWrapper}>
-        <View style={styles.searchContainer}>
-          <Search size={18} color={colors.textTertiary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Cari order atau pelanggan..."
-            placeholderTextColor={colors.textTertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
-              <X size={16} color={colors.textTertiary} />
-            </TouchableOpacity>
-          )}
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <Search size={18} color={colors.textTertiary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Cari order atau pelanggan..."
+              placeholderTextColor={colors.textTertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
+                <X size={16} color={colors.textTertiary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity style={styles.filterBtn} activeOpacity={0.7}>
+            <FilterHorizontal size={20} color={colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -329,7 +334,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.background,
@@ -337,6 +348,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  filterBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.primaryBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
   },
   searchInput: {
     flex: 1,
@@ -354,8 +375,9 @@ const styles = StyleSheet.create({
   },
   ordersContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 14,
     paddingBottom: 100,
+    gap: 0,
   },
   emptyState: {
     padding: 40,
