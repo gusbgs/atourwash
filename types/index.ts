@@ -59,6 +59,13 @@ export interface DashboardStats {
   totalIncomeTransactions: number;
   totalExpense: number;
   totalExpenseTransactions: number;
+  todayOrders: number;
+  todayTransactions: number;
+  todayExpense: number;
+  todayExpenseTransactions: number;
+  cashierTodayOrders: number;
+  cashierTodayRevenue: number;
+  cashierTodayTransactions: number;
 }
 
 export interface Branch {

@@ -61,6 +61,9 @@ import {
   PieChart01Icon,
   Download01Icon,
   FilterHorizontalIcon,
+  InvoiceIcon,
+  UserCheck01Icon,
+  Sun01Icon,
 } from '@hugeicons/core-free-icons';
 
 interface IconProps {
@@ -140,3 +143,6 @@ export const BarChart3 = createIcon(AnalyticsUpIcon);
 export const PieChart = createIcon(PieChart01Icon);
 export const Download = createIcon(Download01Icon);
 export const FilterHorizontal = createIcon(FilterHorizontalIcon);
+export const Receipt = createIcon(InvoiceIcon);
+export const UserCheck = createIcon(UserCheck01Icon);
+export const Sun = createIcon(Sun01Icon);

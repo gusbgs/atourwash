@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Polyline, Line, Circle as SvgCircle, Text as SvgText, Path, G } from 'react-native-svg';
-import { Wallet, TrendingUp, TrendingDown, Building2, ChevronRight, Droplets, Bell, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck, ArrowUpRight, ArrowDownLeft, Calendar } from '@/utils/icons';
+import { Wallet, TrendingUp, TrendingDown, Building2, ChevronRight, Droplets, Bell, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck, ArrowUpRight, ArrowDownLeft, Calendar, ShoppingBag, Receipt, UserCheck, Sun } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/utils/format';
 import { HomeSkeletonLoader } from '@/components/Skeleton';
 import { mockBranches, mockWeeklyCashFlow, mockMonthlyCashFlow, mockYearlyCashFlow, mockServiceDistribution, mockMonthlySummary } from '@/mocks/data';
@@ -25,6 +26,22 @@ function formatShortCurrency(val: number): string {
   if (val >= 1000000) return `${(val / 1000000).toFixed(1)}jt`;
   if (val >= 1000) return `${(val / 1000).toFixed(0)}rb`;
   return `${val}`;
+}
+
+function getGreetingTime(): string {
+  const hour = new Date().getHours();
+  if (hour < 11) return 'Selamat Pagi';
+  if (hour < 15) return 'Selamat Siang';
+  if (hour < 18) return 'Selamat Sore';
+  return 'Selamat Malam';
+}
+
+function getGreetingEmoji(): string {
+  const hour = new Date().getHours();
+  if (hour < 11) return '☀️';
+  if (hour < 15) return '🌤️';
+  if (hour < 18) return '🌅';
+  return '🌙';
 }
 
 function CashFlowChart({ data }: { data: CashFlowDataPoint[] }) {
@@ -160,13 +177,23 @@ const pieStyles = StyleSheet.create({
   legendValue: { fontSize: 12, fontWeight: '600' as const, color: colors.textSecondary },
 });
 
+function getTodayFormatted(): string {
+  const now = new Date();
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  return `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
-  const { orders, dashboardStats } = useApp();
+  const { orders, dashboardStats, user } = useApp();
+  const auth = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState(mockBranches[0]);
   const [branchModalVisible, setBranchModalVisible] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('weekly');
+
+  const userName = auth.user?.name || user.name || 'Pengguna';
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);
@@ -221,6 +248,11 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          <View style={styles.greetingSection}>
+            <Text style={styles.greetingText}>Halo, {userName} {getGreetingEmoji()}</Text>
+            <Text style={styles.greetingSubText}>{getGreetingTime()}</Text>
+          </View>
+
           <TouchableOpacity
             style={styles.branchDropdown}
             onPress={() => setBranchModalVisible(true)}
@@ -230,25 +262,6 @@ export default function HomeScreen() {
             <Text style={styles.branchDropdownText} numberOfLines={1}>{selectedBranch.name}</Text>
             <ChevronDown size={16} color={colors.white} />
           </TouchableOpacity>
-
-          <View style={styles.occupancyCard}>
-            <View style={styles.occupancyTop}>
-              <View style={styles.badgePill}>
-                <View style={styles.badgeDot} />
-                <Text style={styles.badgeText}>Laundry POS</Text>
-              </View>
-            </View>
-            <View style={styles.occupancyRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.occupancyLabel}>Omzet Hari Ini</Text>
-                <Text style={styles.occupancyValue}>{formatCurrency(dashboardStats.todayRevenue)}</Text>
-              </View>
-              <View style={styles.changeChip}>
-                <TrendingUp size={12} color={colors.white} />
-                <Text style={styles.changeText}>+{dashboardStats.revenueChange}%</Text>
-              </View>
-            </View>
-          </View>
         </SafeAreaView>
       </View>
 
@@ -257,64 +270,153 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.financeRow}>
-          <View style={styles.financeCard}>
-            <View style={styles.financeCardHeader}>
-              <View style={[styles.financeIconBox, { backgroundColor: '#E8F5E9' }]}>
-                <ArrowUpRight size={18} color={colors.success} />
-              </View>
-              <Text style={styles.financeCardTitle}>Pemasukan</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={[styles.sectionBadge, { backgroundColor: '#FFF3E0' }]}>
+              <Sun size={14} color="#F57C00" />
             </View>
-            <Text style={styles.financeAmount}>{formatCurrency(dashboardStats.totalIncome)}</Text>
-            <View style={styles.financeTrxRow}>
-              <Wallet size={13} color={colors.textTertiary} />
-              <Text style={styles.financeTrxText}>{dashboardStats.totalIncomeTransactions} transaksi</Text>
+            <View>
+              <Text style={styles.sectionTitleBold}>Hari Ini</Text>
+              <Text style={styles.sectionDate}>{getTodayFormatted()}</Text>
             </View>
           </View>
-          <View style={styles.financeCard}>
-            <View style={styles.financeCardHeader}>
-              <View style={[styles.financeIconBox, { backgroundColor: '#FBE9E7' }]}>
-                <ArrowDownLeft size={18} color={colors.error} />
+
+          <View style={styles.todayHeroCard}>
+            <View style={styles.todayHeroTop}>
+              <Text style={styles.todayHeroLabel}>Omzet Hari Ini</Text>
+              <View style={styles.changeChip}>
+                <TrendingUp size={12} color={colors.white} />
+                <Text style={styles.changeText}>+{dashboardStats.revenueChange}%</Text>
               </View>
-              <Text style={styles.financeCardTitle}>Pengeluaran</Text>
             </View>
-            <Text style={styles.financeAmount}>{formatCurrency(dashboardStats.totalExpense)}</Text>
-            <View style={styles.financeTrxRow}>
-              <Wallet size={13} color={colors.textTertiary} />
-              <Text style={styles.financeTrxText}>{dashboardStats.totalExpenseTransactions} transaksi</Text>
+            <Text style={styles.todayHeroValue}>{formatCurrency(dashboardStats.todayRevenue)}</Text>
+            <View style={styles.todayHeroDivider} />
+            <View style={styles.todayHeroStatsRow}>
+              <View style={styles.todayHeroStatItem}>
+                <ShoppingBag size={14} color={colors.primary} />
+                <Text style={styles.todayHeroStatValue}>{dashboardStats.todayOrders}</Text>
+                <Text style={styles.todayHeroStatLabel}>Order</Text>
+              </View>
+              <View style={styles.todayHeroStatDivider} />
+              <View style={styles.todayHeroStatItem}>
+                <Receipt size={14} color={colors.primary} />
+                <Text style={styles.todayHeroStatValue}>{dashboardStats.todayTransactions}</Text>
+                <Text style={styles.todayHeroStatLabel}>Transaksi</Text>
+              </View>
+              <View style={styles.todayHeroStatDivider} />
+              <View style={styles.todayHeroStatItem}>
+                <ArrowDownLeft size={14} color={colors.error} />
+                <Text style={styles.todayHeroStatValue}>{formatShortCurrency(dashboardStats.todayExpense)}</Text>
+                <Text style={styles.todayHeroStatLabel}>Pengeluaran</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.financeRow}>
+            <View style={styles.financeCard}>
+              <View style={styles.financeCardHeader}>
+                <View style={[styles.financeIconBox, { backgroundColor: '#E8F5E9' }]}>
+                  <ArrowUpRight size={18} color={colors.success} />
+                </View>
+                <Text style={styles.financeCardTitle}>Pemasukan</Text>
+              </View>
+              <Text style={styles.financeAmount}>{formatCurrency(dashboardStats.todayRevenue)}</Text>
+              <View style={styles.financeTrxRow}>
+                <Wallet size={13} color={colors.textTertiary} />
+                <Text style={styles.financeTrxText}>{dashboardStats.todayTransactions} transaksi</Text>
+              </View>
+            </View>
+            <View style={styles.financeCard}>
+              <View style={styles.financeCardHeader}>
+                <View style={[styles.financeIconBox, { backgroundColor: '#FBE9E7' }]}>
+                  <ArrowDownLeft size={18} color={colors.error} />
+                </View>
+                <Text style={styles.financeCardTitle}>Pengeluaran</Text>
+              </View>
+              <Text style={styles.financeAmount}>{formatCurrency(dashboardStats.todayExpense)}</Text>
+              <View style={styles.financeTrxRow}>
+                <Wallet size={13} color={colors.textTertiary} />
+                <Text style={styles.financeTrxText}>{dashboardStats.todayExpenseTransactions} transaksi</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <View style={[styles.statIconBox, { backgroundColor: '#FFF3E0' }]}>
+                <Clock size={18} color={colors.warning} />
+              </View>
+              <Text style={styles.statValue}>{antrianCount}</Text>
+              <Text style={styles.statLabel}>Antrian</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={[styles.statIconBox, { backgroundColor: colors.primaryBg }]}>
+                <Loader size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.statValue}>{diprosesCount}</Text>
+              <Text style={styles.statLabel}>Diproses</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={[styles.statIconBox, { backgroundColor: colors.successBg }]}>
+                <PackageCheck size={18} color={colors.success} />
+              </View>
+              <Text style={styles.statValue}>{siapDiambilCount}</Text>
+              <Text style={styles.statLabel}>Siap Diambil</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: '#FFF3E0' }]}>
-              <Clock size={18} color={colors.warning} />
+        <View style={styles.cashierSection}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={[styles.sectionBadge, { backgroundColor: '#E3F2FD' }]}>
+              <UserCheck size={14} color="#1976D2" />
             </View>
-            <Text style={styles.statValue}>{antrianCount}</Text>
-            <Text style={styles.statLabel}>Antrian</Text>
+            <View>
+              <Text style={styles.sectionTitleBold}>Aktivitas {userName}</Text>
+              <Text style={styles.sectionDate}>Transaksi kamu hari ini</Text>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: colors.primaryBg }]}>
-              <Loader size={18} color={colors.primary} />
+
+          <View style={styles.cashierCard}>
+            <View style={styles.cashierStatRow}>
+              <View style={styles.cashierStatItem}>
+                <View style={[styles.cashierStatIcon, { backgroundColor: '#E8F5E9' }]}>
+                  <ShoppingBag size={16} color={colors.success} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cashierStatLabel}>Order Dibuat</Text>
+                  <Text style={styles.cashierStatValue}>{dashboardStats.cashierTodayOrders}</Text>
+                </View>
+              </View>
+              <View style={styles.cashierStatDivider} />
+              <View style={styles.cashierStatItem}>
+                <View style={[styles.cashierStatIcon, { backgroundColor: colors.primaryBg }]}>
+                  <Wallet size={16} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cashierStatLabel}>Total Pendapatan</Text>
+                  <Text style={styles.cashierStatValue}>{formatCurrency(dashboardStats.cashierTodayRevenue)}</Text>
+                </View>
+              </View>
             </View>
-            <Text style={styles.statValue}>{diprosesCount}</Text>
-            <Text style={styles.statLabel}>Diproses</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: colors.successBg }]}>
-              <PackageCheck size={18} color={colors.success} />
+            <View style={styles.cashierFooter}>
+              <Receipt size={13} color={colors.textTertiary} />
+              <Text style={styles.cashierFooterText}>{dashboardStats.cashierTodayTransactions} transaksi diproses oleh kamu</Text>
             </View>
-            <Text style={styles.statValue}>{siapDiambilCount}</Text>
-            <Text style={styles.statLabel}>Siap Diambil</Text>
           </View>
         </View>
 
-        <View style={styles.monthlySummarySection}>
-          <View style={styles.monthlySummaryHeader}>
-            <Calendar size={16} color={colors.primary} />
-            <Text style={styles.monthlySummaryTitle}>Ringkasan {mockMonthlySummary.month}</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={[styles.sectionBadge, { backgroundColor: '#F3E5F5' }]}>
+              <Calendar size={14} color="#7B1FA2" />
+            </View>
+            <View>
+              <Text style={styles.sectionTitleBold}>Ringkasan Bulanan</Text>
+              <Text style={styles.sectionDate}>{mockMonthlySummary.month}</Text>
+            </View>
           </View>
+
           <View style={styles.monthlySummaryCard}>
             <View style={styles.monthlySummaryRow}>
               <View style={styles.monthlySummaryItem}>
@@ -377,7 +479,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-
       </ScrollView>
 
       <Modal
@@ -438,7 +539,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -471,12 +572,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  greetingSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 10,
+  },
+  greetingText: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.white,
+    marginBottom: 2,
+  },
+  greetingSubText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.75)',
+    fontWeight: '500' as const,
+  },
   branchDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start' as const,
     marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 16,
     backgroundColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -489,51 +606,62 @@ const styles = StyleSheet.create({
     color: colors.white,
     maxWidth: 180,
   },
-  occupancyCard: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    padding: 16,
+  scrollArea: {
+    flex: 1,
   },
-  occupancyTop: {
-    marginBottom: 10,
+  content: {
+    padding: 20,
+    paddingBottom: 100,
+    gap: 24,
   },
-  badgePill: {
+  sectionContainer: {
+    gap: 12,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    gap: 6,
-    alignSelf: 'flex-start' as const,
-  },
-  badgeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#4ADE80',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: colors.white,
-  },
-  occupancyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  occupancyLabel: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
+    gap: 10,
     marginBottom: 2,
   },
-  occupancyValue: {
-    fontSize: 22,
+  sectionBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionTitleBold: {
+    fontSize: 16,
     fontWeight: '700' as const,
+    color: colors.text,
+  },
+  sectionDate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '400' as const,
+    marginTop: 1,
+  },
+  todayHeroCard: {
+    backgroundColor: colors.primary,
+    borderRadius: 18,
+    padding: 18,
+  },
+  todayHeroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  todayHeroLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500' as const,
+  },
+  todayHeroValue: {
+    fontSize: 26,
+    fontWeight: '800' as const,
     color: colors.white,
+    letterSpacing: 0.3,
   },
   changeChip: {
     flexDirection: 'row',
@@ -541,26 +669,48 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 20,
   },
   changeText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600' as const,
     color: colors.white,
   },
-  scrollArea: {
-    flex: 1,
+  todayHeroDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginVertical: 14,
   },
-  content: {
-    padding: 20,
-    paddingBottom: 100,
+  todayHeroStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  todayHeroStatItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  todayHeroStatDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginHorizontal: 6,
+  },
+  todayHeroStatValue: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.white,
+  },
+  todayHeroStatLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500' as const,
   },
   financeRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 12,
-    marginTop: 4,
   },
   financeCard: {
     flex: 1,
@@ -610,7 +760,6 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 16,
   },
   statCard: {
     flex: 1,
@@ -641,9 +790,71 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
   },
+  cashierSection: {
+    gap: 12,
+  },
+  cashierCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1976D2',
+  },
+  cashierStatRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  cashierStatItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  cashierStatIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cashierStatLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500' as const,
+    marginBottom: 3,
+  },
+  cashierStatValue: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  cashierStatDivider: {
+    width: 1,
+    backgroundColor: colors.borderLight,
+    alignSelf: 'stretch',
+    marginHorizontal: 12,
+  },
+  cashierFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  cashierFooterText: {
+    fontSize: 12,
+    color: colors.textTertiary,
+    fontWeight: '500' as const,
+  },
   chartSection: {
-    marginTop: 8,
-    marginBottom: 8,
+    gap: 12,
   },
   chartCard: {
     backgroundColor: colors.white,
@@ -689,21 +900,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '600' as const,
-    color: colors.text,
-    marginBottom: 12,
-  },
-  monthlySummarySection: {
-    marginBottom: 8,
-  },
-  monthlySummaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  monthlySummaryTitle: {
     fontSize: 17,
     fontWeight: '600' as const,
     color: colors.text,

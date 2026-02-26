@@ -2,8 +2,8 @@ import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTempl
 
 export const mockUser: User = {
   id: '1',
-  name: 'Kasir 01',
-  email: 'kasir01@atourwash.com',
+  name: 'Bagus',
+  email: 'bagus@atourwash.com',
   role: 'Kasir',
 };
 
@@ -26,6 +26,13 @@ export const mockDashboardStats: DashboardStats = {
   totalIncomeTransactions: 187,
   totalExpense: 4280000,
   totalExpenseTransactions: 43,
+  todayOrders: 15,
+  todayTransactions: 12,
+  todayExpense: 185000,
+  todayExpenseTransactions: 3,
+  cashierTodayOrders: 8,
+  cashierTodayRevenue: 520000,
+  cashierTodayTransactions: 8,
 };
 
 export const mockServices: Service[] = [
