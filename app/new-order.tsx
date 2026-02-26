@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Modal, Animated, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft } from '@/utils/icons';
+import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft, CheckCircle2 } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { mockKiloanServices, mockSatuanItems, mockFragrances } from '@/mocks/data';
@@ -43,6 +43,13 @@ export default function NewOrderScreen() {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [showPhoneSuggestions, setShowPhoneSuggestions] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [confirmedOrderId, setConfirmedOrderId] = useState('');
+
+  const successScaleAnim = useRef(new Animated.Value(0)).current;
+  const successOpacityAnim = useRef(new Animated.Value(0)).current;
+  const checkmarkAnim = useRef(new Animated.Value(0)).current;
+  const confettiAnim = useRef(new Animated.Value(0)).current;
 
   const existingCustomers = useMemo(() => {
     const map = new Map<string, CustomerSuggestion>();
@@ -181,6 +188,40 @@ export default function NewOrderScreen() {
     setShowConfirmation(true);
   };
 
+  const animateSuccess = useCallback(() => {
+    successScaleAnim.setValue(0);
+    successOpacityAnim.setValue(0);
+    checkmarkAnim.setValue(0);
+    confettiAnim.setValue(0);
+
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(successScaleAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(successOpacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.spring(checkmarkAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(confettiAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [successScaleAnim, successOpacityAnim, checkmarkAnim, confettiAnim]);
+
   const handleConfirmOrder = () => {
     const parts: string[] = [];
     let totalW = 0;
@@ -215,8 +256,10 @@ export default function NewOrderScreen() {
 
     const chosenFrag = mockFragrances.find(f => f.id === selectedFragrance);
 
+    const orderId = `ORD-${String(orders.length + 1).padStart(3, '0')}`;
+
     const newOrder: Order = {
-      id: `ORD-${String(orders.length + 1).padStart(3, '0')}`,
+      id: orderId,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       items: totalItems || Math.ceil(totalW),
@@ -235,9 +278,16 @@ export default function NewOrderScreen() {
     };
 
     addOrder(newOrder);
+    setConfirmedOrderId(orderId);
     setShowConfirmation(false);
-    router.back();
+    setShowSuccess(true);
+    setTimeout(() => animateSuccess(), 100);
   };
+
+  const handleSuccessDone = useCallback(() => {
+    setShowSuccess(false);
+    router.back();
+  }, [router]);
 
 
 
@@ -546,6 +596,117 @@ export default function NewOrderScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showSuccess}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={handleSuccessDone}
+      >
+        <View style={styles.successOverlay}>
+          <Animated.View
+            style={[
+              styles.successContent,
+              {
+                opacity: successOpacityAnim,
+                transform: [{ scale: successScaleAnim }],
+              },
+            ]}
+          >
+            <View style={styles.successIllustrationWrap}>
+              <View style={styles.successCircleOuter}>
+                <View style={styles.successCircleMiddle}>
+                  <Animated.View
+                    style={[
+                      styles.successCircleInner,
+                      { transform: [{ scale: checkmarkAnim }] },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=200&h=200&fit=crop&crop=center' }}
+                      style={styles.successIllustrationImage}
+                    />
+                    <View style={styles.successCheckOverlay}>
+                      <CheckCircle2 size={48} color={colors.white} />
+                    </View>
+                  </Animated.View>
+                </View>
+              </View>
+
+              <Animated.View style={[
+                styles.confettiDot,
+                styles.confettiDot1,
+                { opacity: confettiAnim, transform: [{ scale: confettiAnim }, { translateY: Animated.multiply(confettiAnim, -20) }] },
+              ]}>
+                <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+              </Animated.View>
+              <Animated.View style={[
+                styles.confettiDot,
+                styles.confettiDot2,
+                { opacity: confettiAnim, transform: [{ scale: confettiAnim }, { translateX: Animated.multiply(confettiAnim, 15) }] },
+              ]}>
+                <View style={[styles.dot, { backgroundColor: colors.warning }]} />
+              </Animated.View>
+              <Animated.View style={[
+                styles.confettiDot,
+                styles.confettiDot3,
+                { opacity: confettiAnim, transform: [{ scale: confettiAnim }, { translateX: Animated.multiply(confettiAnim, -15) }] },
+              ]}>
+                <View style={[styles.dot, { backgroundColor: colors.info }]} />
+              </Animated.View>
+              <Animated.View style={[
+                styles.confettiDot,
+                styles.confettiDot4,
+                { opacity: confettiAnim, transform: [{ scale: confettiAnim }, { translateY: Animated.multiply(confettiAnim, 15) }] },
+              ]}>
+                <View style={[styles.dot, { backgroundColor: colors.primaryLight }]} />
+              </Animated.View>
+            </View>
+
+            <Text style={styles.successTitle}>Pesanan Berhasil Dibuat! 🎉</Text>
+            <Text style={styles.successMessage}>
+              Pesanan untuk <Text style={styles.successBold}>{customerName}</Text> telah berhasil disimpan dan siap diproses.
+            </Text>
+
+            <View style={styles.successOrderIdBox}>
+              <Text style={styles.successOrderIdLabel}>No. Pesanan</Text>
+              <Text style={styles.successOrderIdValue}>{confirmedOrderId}</Text>
+            </View>
+
+            <View style={styles.successInfoRow}>
+              <View style={styles.successInfoItem}>
+                <Text style={styles.successInfoLabel}>Total</Text>
+                <Text style={styles.successInfoValue}>{formatFullCurrency(totalPrice)}</Text>
+              </View>
+              <View style={styles.successInfoDivider} />
+              <View style={styles.successInfoItem}>
+                <Text style={styles.successInfoLabel}>Status</Text>
+                <View style={styles.successStatusBadge}>
+                  <Text style={styles.successStatusText}>Dalam Proses</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.successActions}>
+              <TouchableOpacity
+                style={styles.successPrimaryBtn}
+                onPress={handleSuccessDone}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.successPrimaryBtnText}>Kembali ke Beranda</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.successSecondaryBtn}
+                onPress={handleSuccessDone}
+                activeOpacity={0.7}
+              >
+                <Printer size={18} color={colors.primary} />
+                <Text style={styles.successSecondaryBtnText}>Cetak Struk</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
 
       <Modal
         visible={showConfirmation}
@@ -1165,5 +1326,202 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  successOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  successContent: {
+    backgroundColor: colors.white,
+    borderRadius: 28,
+    padding: 32,
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+  },
+  successIllustrationWrap: {
+    width: 160,
+    height: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  successCircleOuter: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: colors.successBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successCircleMiddle: {
+    width: 115,
+    height: 115,
+    borderRadius: 58,
+    backgroundColor: colors.success + '30',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successCircleInner: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  successIllustrationImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    position: 'absolute',
+    opacity: 0.25,
+  },
+  successCheckOverlay: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confettiDot: {
+    position: 'absolute',
+  },
+  confettiDot1: {
+    top: 5,
+    left: 75,
+  },
+  confettiDot2: {
+    top: 75,
+    right: 5,
+  },
+  confettiDot3: {
+    top: 75,
+    left: 5,
+  },
+  confettiDot4: {
+    bottom: 5,
+    left: 75,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: colors.text,
+    textAlign: 'center' as const,
+    marginBottom: 8,
+  },
+  successMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center' as const,
+    lineHeight: 21,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  successBold: {
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  successOrderIdBox: {
+    backgroundColor: colors.primaryBg,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary + '20',
+    borderStyle: 'dashed' as const,
+    width: '100%',
+    marginBottom: 20,
+  },
+  successOrderIdLabel: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  successOrderIdValue: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: colors.primaryDark,
+    letterSpacing: 1,
+  },
+  successInfoRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: 14,
+    padding: 16,
+    width: '100%',
+    marginBottom: 24,
+  },
+  successInfoItem: {
+    flex: 1,
+    alignItems: 'center' as const,
+  },
+  successInfoLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  successInfoValue: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: colors.text,
+  },
+  successInfoDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: colors.border,
+  },
+  successStatusBadge: {
+    backgroundColor: colors.warningBg,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  successStatusText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: colors.warning,
+  },
+  successActions: {
+    width: '100%',
+    gap: 10,
+  },
+  successPrimaryBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  successPrimaryBtnText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.white,
+  },
+  successSecondaryBtn: {
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    justifyContent: 'center' as const,
+    gap: 8,
+    backgroundColor: colors.primaryBg,
+    borderRadius: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: colors.primary + '25',
+  },
+  successSecondaryBtnText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.primary,
   },
 });
