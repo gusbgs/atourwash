@@ -69,14 +69,14 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
               <Text style={styles.pickupText}>{order.pickupTime}</Text>
             </View>
           </View>
-          <View style={styles.stepsRow}>
-            {PRODUCTION_STEPS.map((step, i) => {
-              const completed = getStepIndex(order.productionStatus) > i;
-              const active = getStepIndex(order.productionStatus) === i + 1 && order.productionStatus !== 'selesai';
-              const isLast = i === PRODUCTION_STEPS.length - 1;
-              return (
-                <React.Fragment key={step.key}>
-                  <View style={styles.stepItem}>
+          <View style={styles.stepsContainer}>
+            <View style={styles.stepsDotsRow}>
+              {PRODUCTION_STEPS.map((step, i) => {
+                const completed = getStepIndex(order.productionStatus) > i;
+                const active = getStepIndex(order.productionStatus) === i + 1 && order.productionStatus !== 'selesai';
+                const isLastStep = i === PRODUCTION_STEPS.length - 1;
+                return (
+                  <React.Fragment key={step.key}>
                     <View style={[
                       styles.stepDot,
                       completed && styles.stepDotCompleted,
@@ -84,21 +84,35 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
                     ]}>
                       {completed && <Text style={styles.stepCheck}>\u2713</Text>}
                     </View>
-                    <Text style={[
+                    {!isLastStep && (
+                      <View style={[
+                        styles.stepLine,
+                        completed && styles.stepLineCompleted,
+                      ]} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </View>
+            <View style={styles.stepsLabelsRow}>
+              {PRODUCTION_STEPS.map((step, i) => {
+                const completed = getStepIndex(order.productionStatus) > i;
+                const active = getStepIndex(order.productionStatus) === i + 1 && order.productionStatus !== 'selesai';
+                return (
+                  <Text
+                    key={step.key}
+                    style={[
                       styles.stepLabel,
                       completed && styles.stepLabelCompleted,
                       active && styles.stepLabelActive,
-                    ]} numberOfLines={1}>{step.label}</Text>
-                  </View>
-                  {!isLast && (
-                    <View style={[
-                      styles.stepLine,
-                      completed && styles.stepLineCompleted,
-                    ]} />
-                  )}
-                </React.Fragment>
-              );
-            })}
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {step.label}
+                  </Text>
+                );
+              })}
+            </View>
           </View>
         </View>
         <ChevronRight size={18} color={colors.textTertiary} />
@@ -192,22 +206,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textTertiary,
   },
-  stepsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  stepsContainer: {
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.borderLight,
   },
-  stepItem: {
+  stepsDotsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    paddingHorizontal: 20,
+  },
+  stepsLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
   },
   stepDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: colors.border,
     backgroundColor: colors.white,
@@ -223,15 +241,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryBg,
   },
   stepCheck: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.white,
     fontWeight: '700' as const,
     marginTop: -1,
   },
   stepLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textTertiary,
     fontWeight: '500' as const,
+    textAlign: 'center' as const,
+    flex: 1,
   },
   stepLabelCompleted: {
     color: colors.primary,
@@ -245,8 +265,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 2,
     backgroundColor: colors.border,
-    marginBottom: 16,
-    marginHorizontal: 4,
+    marginHorizontal: 6,
   },
   stepLineCompleted: {
     backgroundColor: colors.primary,
