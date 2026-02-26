@@ -3,21 +3,21 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Polyline, Line, Circle as SvgCircle, Text as SvgText, Path, G } from 'react-native-svg';
-import { Wallet, TrendingUp, TrendingDown, Building2, ChevronRight, Droplets, Bell, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck, ArrowUpRight, ArrowDownLeft } from '@/utils/icons';
+import { Wallet, TrendingUp, TrendingDown, Building2, ChevronRight, Droplets, Bell, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck, ArrowUpRight, ArrowDownLeft, Calendar } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency } from '@/utils/format';
-import { OrderCard } from '@/components/OrderCard';
 import { HomeSkeletonLoader } from '@/components/Skeleton';
-import { mockBranches, mockWeeklyRevenue, mockMonthlyRevenue, mockYearlyRevenue, mockServiceDistribution } from '@/mocks/data';
+import { mockBranches, mockWeeklyCashFlow, mockMonthlyCashFlow, mockYearlyCashFlow, mockServiceDistribution, mockMonthlySummary } from '@/mocks/data';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 type ChartPeriod = 'weekly' | 'monthly' | 'yearly';
 
-interface RevenueDataPoint {
+interface CashFlowDataPoint {
   label: string;
-  value: number;
+  income: number;
+  expense: number;
 }
 
 function formatShortCurrency(val: number): string {
@@ -27,9 +27,9 @@ function formatShortCurrency(val: number): string {
   return `${val}`;
 }
 
-function LineChart({ data }: { data: RevenueDataPoint[] }) {
+function CashFlowChart({ data }: { data: CashFlowDataPoint[] }) {
   const chartW = SCREEN_WIDTH - 80;
-  const chartH = 140;
+  const chartH = 160;
   const padL = 45;
   const padR = 15;
   const padT = 15;
@@ -37,16 +37,23 @@ function LineChart({ data }: { data: RevenueDataPoint[] }) {
   const innerW = chartW - padL - padR;
   const innerH = chartH - padT - padB;
 
-  const maxVal = Math.max(...data.map(d => d.value));
+  const allValues = data.flatMap(d => [d.income, d.expense]);
+  const maxVal = Math.max(...allValues);
   const minVal = 0;
   const range = maxVal - minVal || 1;
 
-  const points = data.map((d, i) => ({
+  const incomePoints = data.map((d, i) => ({
     x: padL + (innerW / Math.max(data.length - 1, 1)) * i,
-    y: padT + innerH - ((d.value - minVal) / range) * innerH,
+    y: padT + innerH - ((d.income - minVal) / range) * innerH,
   }));
 
-  const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+  const expensePoints = data.map((d, i) => ({
+    x: padL + (innerW / Math.max(data.length - 1, 1)) * i,
+    y: padT + innerH - ((d.expense - minVal) / range) * innerH,
+  }));
+
+  const incomePolyline = incomePoints.map(p => `${p.x},${p.y}`).join(' ');
+  const expensePolyline = expensePoints.map(p => `${p.x},${p.y}`).join(' ');
 
   const gridLines = [0, 0.5, 1].map(frac => ({
     y: padT + innerH - frac * innerH,
@@ -54,23 +61,46 @@ function LineChart({ data }: { data: RevenueDataPoint[] }) {
   }));
 
   return (
-    <Svg width={chartW} height={chartH}>
-      {gridLines.map((g, i) => (
-        <G key={i}>
-          <Line x1={padL} y1={g.y} x2={chartW - padR} y2={g.y} stroke={colors.borderLight} strokeWidth={1} />
-          <SvgText x={padL - 6} y={g.y + 4} fontSize={9} fill={colors.textTertiary} textAnchor="end">{g.label}</SvgText>
-        </G>
-      ))}
-      <Polyline points={polylinePoints} fill="none" stroke={colors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-      {points.map((p, i) => (
-        <SvgCircle key={i} cx={p.x} cy={p.y} r={4} fill={colors.white} stroke={colors.primary} strokeWidth={2.5} />
-      ))}
-      {data.map((d, i) => (
-        <SvgText key={i} x={points[i].x} y={chartH - 6} fontSize={10} fill={colors.textSecondary} textAnchor="middle">{d.label}</SvgText>
-      ))}
-    </Svg>
+    <View>
+      <View style={cashFlowLegendStyles.row}>
+        <View style={cashFlowLegendStyles.item}>
+          <View style={[cashFlowLegendStyles.dot, { backgroundColor: colors.primary }]} />
+          <Text style={cashFlowLegendStyles.text}>Pemasukan</Text>
+        </View>
+        <View style={cashFlowLegendStyles.item}>
+          <View style={[cashFlowLegendStyles.dot, { backgroundColor: colors.error }]} />
+          <Text style={cashFlowLegendStyles.text}>Pengeluaran</Text>
+        </View>
+      </View>
+      <Svg width={chartW} height={chartH}>
+        {gridLines.map((g, i) => (
+          <G key={i}>
+            <Line x1={padL} y1={g.y} x2={chartW - padR} y2={g.y} stroke={colors.borderLight} strokeWidth={1} />
+            <SvgText x={padL - 6} y={g.y + 4} fontSize={9} fill={colors.textTertiary} textAnchor="end">{g.label}</SvgText>
+          </G>
+        ))}
+        <Polyline points={incomePolyline} fill="none" stroke={colors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        <Polyline points={expensePolyline} fill="none" stroke={colors.error} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6,3" />
+        {incomePoints.map((p, i) => (
+          <SvgCircle key={`inc-${i}`} cx={p.x} cy={p.y} r={4} fill={colors.white} stroke={colors.primary} strokeWidth={2.5} />
+        ))}
+        {expensePoints.map((p, i) => (
+          <SvgCircle key={`exp-${i}`} cx={p.x} cy={p.y} r={3.5} fill={colors.white} stroke={colors.error} strokeWidth={2} />
+        ))}
+        {data.map((d, i) => (
+          <SvgText key={i} x={incomePoints[i].x} y={chartH - 6} fontSize={10} fill={colors.textSecondary} textAnchor="middle">{d.label}</SvgText>
+        ))}
+      </Svg>
+    </View>
   );
 }
+
+const cashFlowLegendStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 16, marginBottom: 12, paddingLeft: 4 },
+  item: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  text: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' as const },
+});
 
 function PieChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const size = 140;
@@ -143,16 +173,14 @@ export default function HomeScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  const recentOrders = orders.slice(0, 3);
-
   const antrianCount = useMemo(() => orders.filter(o => o.productionStatus === 'antrian').length, [orders]);
   const diprosesCount = useMemo(() => orders.filter(o => o.productionStatus === 'diproses').length, [orders]);
   const siapDiambilCount = useMemo(() => orders.filter(o => o.productionStatus === 'siap_diambil').length, [orders]);
 
-  const chartData = useMemo(() => {
-    if (chartPeriod === 'weekly') return mockWeeklyRevenue;
-    if (chartPeriod === 'monthly') return mockMonthlyRevenue;
-    return mockYearlyRevenue;
+  const cashFlowData = useMemo(() => {
+    if (chartPeriod === 'weekly') return mockWeeklyCashFlow;
+    if (chartPeriod === 'monthly') return mockMonthlyCashFlow;
+    return mockYearlyCashFlow;
   }, [chartPeriod]);
 
   if (isLoading) {
@@ -282,8 +310,44 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <View style={styles.monthlySummarySection}>
+          <View style={styles.monthlySummaryHeader}>
+            <Calendar size={16} color={colors.primary} />
+            <Text style={styles.monthlySummaryTitle}>Ringkasan {mockMonthlySummary.month}</Text>
+          </View>
+          <View style={styles.monthlySummaryCard}>
+            <View style={styles.monthlySummaryRow}>
+              <View style={styles.monthlySummaryItem}>
+                <View style={styles.monthlySummaryDot}>
+                  <ArrowUpRight size={12} color={colors.success} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.monthlySummaryLabel}>Total Pemasukan</Text>
+                  <Text style={[styles.monthlySummaryValue, { color: colors.success }]}>{formatCurrency(mockMonthlySummary.totalIncome)}</Text>
+                  <Text style={styles.monthlySummaryTrx}>{mockMonthlySummary.totalIncomeTransactions} transaksi</Text>
+                </View>
+              </View>
+              <View style={styles.monthlySummaryDivider} />
+              <View style={styles.monthlySummaryItem}>
+                <View style={[styles.monthlySummaryDot, { backgroundColor: '#FBE9E7' }]}>
+                  <ArrowDownLeft size={12} color={colors.error} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.monthlySummaryLabel}>Total Pengeluaran</Text>
+                  <Text style={[styles.monthlySummaryValue, { color: colors.error }]}>{formatCurrency(mockMonthlySummary.totalExpense)}</Text>
+                  <Text style={styles.monthlySummaryTrx}>{mockMonthlySummary.totalExpenseTransactions} transaksi</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.netProfitRow}>
+              <Text style={styles.netProfitLabel}>Laba Bersih</Text>
+              <Text style={styles.netProfitValue}>{formatCurrency(mockMonthlySummary.netProfit)}</Text>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Trend Pemasukan</Text>
+          <Text style={styles.sectionTitle}>Arus Kas</Text>
           <View style={styles.chartCard}>
             <View style={styles.periodTabs}>
               {([
@@ -301,7 +365,7 @@ export default function HomeScreen() {
               ))}
             </View>
             <View style={styles.chartContainer}>
-              <LineChart data={chartData} />
+              <CashFlowChart data={cashFlowData} />
             </View>
           </View>
         </View>
@@ -313,19 +377,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.recentSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Order Terbaru</Text>
-            <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push('/orders' as any)}>
-              <Text style={styles.seeAll}>Lihat Semua</Text>
-              <ChevronRight size={16} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
 
-          {recentOrders.map(order => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-        </View>
       </ScrollView>
 
       <Modal
@@ -636,29 +688,94 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
   },
-  recentSection: {
-    flex: 1,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '600' as const,
     color: colors.text,
     marginBottom: 12,
   },
-  seeAllButton: {
+  monthlySummarySection: {
+    marginBottom: 8,
+  },
+  monthlySummaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 8,
+    marginBottom: 12,
   },
-  seeAll: {
+  monthlySummaryTitle: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  monthlySummaryCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  monthlySummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  monthlySummaryItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  monthlySummaryDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  monthlySummaryLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500' as const,
+    marginBottom: 3,
+  },
+  monthlySummaryValue: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    marginBottom: 2,
+  },
+  monthlySummaryTrx: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    fontWeight: '500' as const,
+  },
+  monthlySummaryDivider: {
+    width: 1,
+    backgroundColor: colors.borderLight,
+    alignSelf: 'stretch',
+    marginHorizontal: 12,
+  },
+  netProfitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  netProfitLabel: {
     fontSize: 13,
     fontWeight: '600' as const,
+    color: colors.textSecondary,
+  },
+  netProfitValue: {
+    fontSize: 16,
+    fontWeight: '700' as const,
     color: colors.primary,
   },
   modalOverlay: {

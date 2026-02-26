@@ -94,6 +94,37 @@ export const mockYearlyRevenue = [
   { label: '2026', value: 38000000 },
 ];
 
+export const mockWeeklyCashFlow = [
+  { label: 'W1', income: 2400000, expense: 980000 },
+  { label: 'W2', income: 3100000, expense: 1200000 },
+  { label: 'W3', income: 2800000, expense: 1050000 },
+  { label: 'W4', income: 3500000, expense: 1350000 },
+];
+
+export const mockMonthlyCashFlow = [
+  { label: 'Jan', income: 9500000, expense: 3800000 },
+  { label: 'Feb', income: 11200000, expense: 4100000 },
+  { label: 'Mar', income: 10800000, expense: 3950000 },
+  { label: 'Apr', income: 12500000, expense: 4600000 },
+  { label: 'Mei', income: 13100000, expense: 4280000 },
+  { label: 'Jun', income: 11800000, expense: 4050000 },
+];
+
+export const mockYearlyCashFlow = [
+  { label: '2024', income: 120000000, expense: 48000000 },
+  { label: '2025', income: 145000000, expense: 55000000 },
+  { label: '2026', income: 38000000, expense: 14500000 },
+];
+
+export const mockMonthlySummary = {
+  month: 'Februari 2026',
+  totalIncome: 13450000,
+  totalIncomeTransactions: 187,
+  totalExpense: 4280000,
+  totalExpenseTransactions: 43,
+  netProfit: 9170000,
+};
+
 export const mockServiceDistribution = [
   { label: 'Cuci Reguler', value: 45, color: '#23A174' },
   { label: 'Cuci Express', value: 25, color: '#3B82F6' },
