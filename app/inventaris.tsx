@@ -209,8 +209,6 @@ export default function InventarisScreen() {
   }, [movements, historyFilter, search]);
 
   const lowStock = useMemo(() => items.filter(i => i.stock <= i.minStock).length, [items]);
-  const totalMasuk = useMemo(() => movements.filter(m => m.type === 'masuk').length, [movements]);
-  const totalKeluar = useMemo(() => movements.filter(m => m.type === 'keluar').length, [movements]);
 
   const formatDate = useCallback((dateStr: string) => {
     const d = new Date(dateStr);
@@ -308,43 +306,72 @@ export default function InventarisScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={styles.safeTop}>
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>Inventaris</Text>
-              <Text style={styles.subtitle}>Kelola stok & barang</Text>
-            </View>
+      {/* 1. Green Appbar */}
+      <View style={styles.appbarBg}>
+        <SafeAreaView edges={['top']} style={styles.appbarSafe}>
+          <View style={styles.appbar}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+              <ArrowLeft size={22} color={colors.white} />
+            </TouchableOpacity>
+            <Text style={styles.appbarTitle}>Inventaris</Text>
             <TouchableOpacity style={styles.addBtn} onPress={openAdd} activeOpacity={0.7}>
               <Plus size={20} color={colors.white} />
             </TouchableOpacity>
           </View>
-        </View>
 
-        {lowStock > 0 && (
-          <View style={styles.alertBanner}>
-            <AlertCircle size={16} color="#EF4444" />
-            <Text style={styles.alertText}>{lowStock} item stok rendah / habis</Text>
-          </View>
-        )}
+          {lowStock > 0 && (
+            <View style={styles.alertBanner}>
+              <AlertCircle size={14} color="#FBBF24" />
+              <Text style={styles.alertText}>{lowStock} item stok rendah / habis</Text>
+            </View>
+          )}
+        </SafeAreaView>
+      </View>
 
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { borderLeftColor: colors.primary }]}>
-            <Text style={styles.summaryNum}>{items.length}</Text>
-            <Text style={styles.summaryLabel}>Total Barang</Text>
-          </View>
-          <View style={[styles.summaryCard, { borderLeftColor: colors.info }]}>
-            <Text style={styles.summaryNum}>{totalMasuk}</Text>
-            <Text style={styles.summaryLabel}>Stok Masuk</Text>
-          </View>
-          <View style={[styles.summaryCard, { borderLeftColor: colors.error }]}>
-            <Text style={styles.summaryNum}>{totalKeluar}</Text>
-            <Text style={styles.summaryLabel}>Stok Keluar</Text>
-          </View>
-        </View>
+      {/* 2. Tab Swipable */}
+      <View style={styles.tabRow}>
+        {tabs.map((tab, index) => {
+          const count = getTabCount(tab.key);
+          const isActive = activeTabIndex === index;
+          const IconComp = tab.icon;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={styles.tabItem}
+              onPress={() => handleTabPress(index)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabContent}>
+                <IconComp size={16} color={isActive ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                  {tab.label}
+                </Text>
+                {count > 0 && (
+                  <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                    <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
+                      {count}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+        <Animated.View
+          style={[
+            styles.tabIndicator,
+            {
+              width: tabWidth - 24,
+              transform: [{ translateX: Animated.add(indicatorTranslateX, 12) }],
+            },
+          ]}
+        />
+      </View>
 
+      {/* 3. Search bar */}
+      <View style={styles.searchWrapper}>
         <View style={styles.searchContainer}>
-          <Search size={20} color={colors.textTertiary} />
+          <Search size={18} color={colors.textTertiary} />
           <TextInput
             style={styles.searchInput}
             placeholder={activeTabIndex === 0 ? 'Cari barang...' : 'Cari riwayat stok...'}
@@ -352,48 +379,15 @@ export default function InventarisScreen() {
             value={search}
             onChangeText={setSearch}
           />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} activeOpacity={0.7}>
+              <X size={16} color={colors.textTertiary} />
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        <View style={styles.tabRow}>
-          {tabs.map((tab, index) => {
-            const count = getTabCount(tab.key);
-            const isActive = activeTabIndex === index;
-            const IconComp = tab.icon;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={styles.tabItem}
-                onPress={() => handleTabPress(index)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.tabContent}>
-                  <IconComp size={16} color={isActive ? colors.primary : colors.textSecondary} />
-                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-                    {tab.label}
-                  </Text>
-                  {count > 0 && (
-                    <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                      <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
-                        {count}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-          <Animated.View
-            style={[
-              styles.tabIndicator,
-              {
-                width: tabWidth - 24,
-                transform: [{ translateX: Animated.add(indicatorTranslateX, 12) }],
-              },
-            ]}
-          />
-        </View>
-      </SafeAreaView>
-
+      {/* 4. List barang (swipable content) */}
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -565,103 +559,56 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  safeTop: {
-    backgroundColor: colors.background,
+  appbarBg: {
+    backgroundColor: colors.primary,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+  appbarSafe: {
+    backgroundColor: colors.primary,
   },
-  headerRow: {
+  appbar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  addBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.primary,
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+  },
+  appbarTitle: {
+    flex: 1,
+    fontSize: 19,
+    fontWeight: '700' as const,
+    color: colors.white,
+    marginLeft: 12,
+  },
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   alertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FEF2F2',
-    marginHorizontal: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 12,
   },
   alertText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500' as const,
-    color: '#EF4444',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 12,
-    borderLeftWidth: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  summaryNum: {
-    fontSize: 20,
-    fontWeight: '800' as const,
-    color: colors.text,
-  },
-  summaryLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    marginHorizontal: 20,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 12,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    fontSize: 15,
-    color: colors.text,
+    color: colors.white,
   },
   tabRow: {
     flexDirection: 'row',
@@ -715,6 +662,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 2,
   },
+  searchWrapper: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    color: colors.text,
+  },
   pagerContainer: {
     flex: 1,
   },
@@ -723,8 +692,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: 100,
   },
   filterRow: {
