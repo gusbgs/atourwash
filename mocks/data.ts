@@ -22,6 +22,10 @@ export const mockDashboardStats: DashboardStats = {
   activeOrders: 12,
   overdueOrders: 2,
   completedOrders: 8,
+  totalIncome: 13450000,
+  totalIncomeTransactions: 187,
+  totalExpense: 4280000,
+  totalExpenseTransactions: 43,
 };
 
 export const mockServices: Service[] = [

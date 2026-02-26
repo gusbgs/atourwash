@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
-import { Home, ClipboardList, Factory, User, Plus } from '@/utils/icons';
+import { Home, ClipboardList, Grid3x3, User, Plus } from '@/utils/icons';
 import type { HugeIcon } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
@@ -64,8 +64,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="production"
         options={{
-          title: 'Produksi',
-          tabBarIcon: ({ focused }) => <TabBarIcon icon={Factory} focused={focused} />,
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="lainnya"
+        options={{
+          title: 'Lainnya',
+          tabBarIcon: ({ focused }) => <TabBarIcon icon={Grid3x3} focused={focused} />,
         }}
       />
       <Tabs.Screen

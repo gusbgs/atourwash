@@ -54,6 +54,10 @@ export interface DashboardStats {
   activeOrders: number;
   overdueOrders: number;
   completedOrders: number;
+  totalIncome: number;
+  totalIncomeTransactions: number;
+  totalExpense: number;
+  totalExpenseTransactions: number;
 }
 
 export interface Branch {

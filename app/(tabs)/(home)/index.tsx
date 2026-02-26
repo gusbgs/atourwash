@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Polyline, Line, Circle as SvgCircle, Text as SvgText, Path, G } from 'react-native-svg';
-import { Wallet, TrendingUp, Users, Building2, Package, FileText, ChevronRight, Droplets, Bell, Grid3x3, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck } from '@/utils/icons';
+import { Wallet, TrendingUp, TrendingDown, Building2, ChevronRight, Droplets, Bell, ChevronDown, MapPin, Check, Clock, Loader, PackageCheck, ArrowUpRight, ArrowDownLeft } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency } from '@/utils/format';
@@ -11,19 +11,7 @@ import { OrderCard } from '@/components/OrderCard';
 import { HomeSkeletonLoader } from '@/components/Skeleton';
 import { mockBranches, mockWeeklyRevenue, mockMonthlyRevenue, mockYearlyRevenue, mockServiceDistribution } from '@/mocks/data';
 
-const MENU_COLOR = colors.primary;
-const MENU_BG = colors.primaryBg;
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-const favoriteMenuItems = [
-  { icon: Users, label: 'Pelanggan', color: MENU_COLOR, bgColor: MENU_BG, route: '/pelanggan' },
-  { icon: Building2, label: 'Cabang', color: MENU_COLOR, bgColor: MENU_BG, route: '/cabang' },
-  { icon: Wallet, label: 'Keuangan', color: MENU_COLOR, bgColor: MENU_BG, route: '/keuangan' },
-  { icon: Package, label: 'Inventaris', color: MENU_COLOR, bgColor: MENU_BG, route: '/inventaris' },
-  { icon: FileText, label: 'Laporan', color: MENU_COLOR, bgColor: MENU_BG, route: '/laporan' },
-];
-
-const lainnyaItem = { icon: Grid3x3, label: 'Lainnya', color: MENU_COLOR, bgColor: MENU_BG };
 
 type ChartPeriod = 'weekly' | 'monthly' | 'yearly';
 
@@ -167,14 +155,6 @@ export default function HomeScreen() {
     return mockYearlyRevenue;
   }, [chartPeriod]);
 
-  const handleMenuPress = useCallback((item: { label: string; route?: string }) => {
-    if (item.route) {
-      router.push(item.route as any);
-    } else if (item.label === 'Lainnya') {
-      router.push('/lainnya' as any);
-    }
-  }, [router]);
-
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -249,6 +229,35 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.financeRow}>
+          <View style={styles.financeCard}>
+            <View style={styles.financeCardHeader}>
+              <View style={[styles.financeIconBox, { backgroundColor: '#E8F5E9' }]}>
+                <ArrowUpRight size={18} color={colors.success} />
+              </View>
+              <Text style={styles.financeCardTitle}>Pemasukan</Text>
+            </View>
+            <Text style={styles.financeAmount}>{formatCurrency(dashboardStats.totalIncome)}</Text>
+            <View style={styles.financeTrxRow}>
+              <Wallet size={13} color={colors.textTertiary} />
+              <Text style={styles.financeTrxText}>{dashboardStats.totalIncomeTransactions} transaksi</Text>
+            </View>
+          </View>
+          <View style={styles.financeCard}>
+            <View style={styles.financeCardHeader}>
+              <View style={[styles.financeIconBox, { backgroundColor: '#FBE9E7' }]}>
+                <ArrowDownLeft size={18} color={colors.error} />
+              </View>
+              <Text style={styles.financeCardTitle}>Pengeluaran</Text>
+            </View>
+            <Text style={styles.financeAmount}>{formatCurrency(dashboardStats.totalExpense)}</Text>
+            <View style={styles.financeTrxRow}>
+              <Wallet size={13} color={colors.textTertiary} />
+              <Text style={styles.financeTrxText}>{dashboardStats.totalExpenseTransactions} transaksi</Text>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <View style={[styles.statIconBox, { backgroundColor: '#FFF3E0' }]}>
@@ -270,37 +279,6 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.statValue}>{siapDiambilCount}</Text>
             <Text style={styles.statLabel}>Siap Diambil</Text>
-          </View>
-        </View>
-
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>Menu</Text>
-          <View style={styles.menuCard}>
-            <View style={styles.menuGrid}>
-              {favoriteMenuItems.map((item) => (
-                <TouchableOpacity
-                  key={item.label}
-                  style={styles.menuItem}
-                  onPress={() => handleMenuPress(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuIconBox, { backgroundColor: item.bgColor }]}>
-                    <item.icon size={22} color={item.color} />
-                  </View>
-                  <Text style={styles.menuLabel} numberOfLines={1}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => handleMenuPress({ label: 'Lainnya', route: '/lainnya' })}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuIconBox, { backgroundColor: lainnyaItem.bgColor }]}>
-                  <lainnyaItem.icon size={22} color={lainnyaItem.color} />
-                </View>
-                <Text style={styles.menuLabel} numberOfLines={1}>{lainnyaItem.label}</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
 
@@ -526,11 +504,61 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
+  financeRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  financeCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  financeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  financeIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  financeCardTitle: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+  },
+  financeAmount: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.text,
+    marginBottom: 6,
+  },
+  financeTrxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  financeTrxText: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    fontWeight: '500' as const,
+  },
   statsRow: {
     flexDirection: 'row',
     gap: 10,
     marginBottom: 16,
-    marginTop: 4,
   },
   statCard: {
     flex: 1,
@@ -607,43 +635,6 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
-  },
-  menuSection: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  menuCard: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  menuGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  menuItem: {
-    width: '33.33%',
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  menuIconBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  menuLabel: {
-    fontSize: 12,
-    fontWeight: '500' as const,
-    color: colors.text,
-    textAlign: 'center' as const,
   },
   recentSection: {
     flex: 1,
