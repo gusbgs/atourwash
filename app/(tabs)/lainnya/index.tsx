@@ -49,7 +49,7 @@ const menuGroups: { title: string; items: MenuItem[] }[] = [
     title: 'Pengaturan',
     items: [
       { icon: Settings, label: 'Pengaturan', color: MENU_COLOR, bgColor: MENU_BG },
-      { icon: Bell, label: 'Notifikasi', color: MENU_COLOR, bgColor: MENU_BG },
+      { icon: Bell, label: 'Notifikasi', color: MENU_COLOR, bgColor: MENU_BG, route: '/notifikasi' },
       { icon: Shield, label: 'Keamanan', color: MENU_COLOR, bgColor: MENU_BG },
       { icon: HelpCircle, label: 'Bantuan', color: MENU_COLOR, bgColor: MENU_BG },
     ],

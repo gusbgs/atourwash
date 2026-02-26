@@ -187,7 +187,7 @@ export default function HomeScreen() {
               <Text style={styles.brandName}>AtourWash</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerIconBtn}>
+              <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/notifikasi' as any)}>
                 <Bell size={20} color={colors.white} />
               </TouchableOpacity>
             </View>

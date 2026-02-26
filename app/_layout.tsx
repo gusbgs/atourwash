@@ -167,6 +167,10 @@ function RootLayoutNav() {
         name="broadcast-send" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="notifikasi" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

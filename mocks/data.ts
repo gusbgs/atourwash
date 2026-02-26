@@ -1,4 +1,4 @@
-import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement } from '@/types';
+import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement, Notification } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -187,6 +187,95 @@ export const mockStockMovements: StockMovement[] = [
   { id: 'sm10', itemId: '1', itemName: 'Deterjen Bubuk', type: 'keluar', quantity: 5, unit: 'kg', note: 'Pemakaian order besar', date: '2024-01-18T13:00:00Z', balanceBefore: 23, balanceAfter: 18 },
   { id: 'sm11', itemId: '3', itemName: 'Pemutih', type: 'masuk', quantity: 3, unit: 'liter', note: 'Pembelian dari PT Kimia Jaya', date: '2024-01-15T08:00:00Z', balanceBefore: 2, balanceAfter: 5 },
   { id: 'sm12', itemId: '7', itemName: 'Softener', type: 'keluar', quantity: 1.5, unit: 'liter', note: 'Pemakaian cuci reguler', date: '2024-01-19T10:00:00Z', balanceBefore: 7.5, balanceAfter: 6 },
+];
+
+export const mockNotifications: Notification[] = [
+  {
+    id: 'n1',
+    type: 'order',
+    title: 'Pesanan Baru Masuk',
+    message: 'Pesanan ORD-007 dari Rina Marlina telah dibuat. Layanan: Cuci Express, 3.5 kg.',
+    isRead: false,
+    createdAt: '2024-01-20T14:30:00Z',
+    orderId: 'ORD-007',
+  },
+  {
+    id: 'n2',
+    type: 'production',
+    title: 'Produksi Selesai',
+    message: 'Pesanan ORD-002 (Siti Rahayu) telah selesai diproduksi dan siap diambil.',
+    isRead: false,
+    createdAt: '2024-01-20T12:00:00Z',
+    orderId: 'ORD-002',
+  },
+  {
+    id: 'n3',
+    type: 'payment',
+    title: 'Pembayaran Diterima',
+    message: 'Pembayaran lunas sebesar Rp 50.400 diterima untuk pesanan ORD-002 (Siti Rahayu).',
+    isRead: false,
+    createdAt: '2024-01-20T11:45:00Z',
+    orderId: 'ORD-002',
+  },
+  {
+    id: 'n4',
+    type: 'system',
+    title: 'Stok Menipis',
+    message: 'Stok Pemutih tersisa 3 liter, di bawah batas minimum (5 liter). Segera lakukan restock.',
+    isRead: true,
+    createdAt: '2024-01-20T09:00:00Z',
+  },
+  {
+    id: 'n5',
+    type: 'promo',
+    title: 'Promo Akhir Pekan Aktif',
+    message: 'Promo diskon 20% untuk semua layanan cuci telah aktif. Berlaku hingga Minggu.',
+    isRead: true,
+    createdAt: '2024-01-19T18:00:00Z',
+  },
+  {
+    id: 'n6',
+    type: 'order',
+    title: 'Pesanan Terlambat',
+    message: 'Pesanan ORD-003 (Ahmad Wijaya) melewati estimasi pengambilan. Harap segera proses.',
+    isRead: true,
+    createdAt: '2024-01-19T16:00:00Z',
+    orderId: 'ORD-003',
+  },
+  {
+    id: 'n7',
+    type: 'payment',
+    title: 'DP Diterima',
+    message: 'DP sebesar Rp 10.000 diterima untuk pesanan ORD-001 (Budi Santoso).',
+    isRead: true,
+    createdAt: '2024-01-19T10:00:00Z',
+    orderId: 'ORD-001',
+  },
+  {
+    id: 'n8',
+    type: 'production',
+    title: 'Mulai Diproses',
+    message: 'Pesanan ORD-001 (Budi Santoso) mulai diproses di mesin cuci.',
+    isRead: true,
+    createdAt: '2024-01-19T08:30:00Z',
+    orderId: 'ORD-001',
+  },
+  {
+    id: 'n9',
+    type: 'system',
+    title: 'Shift Dimulai',
+    message: 'Shift pagi telah dimulai oleh Kasir 01 pada pukul 08:00.',
+    isRead: true,
+    createdAt: '2024-01-19T08:00:00Z',
+  },
+  {
+    id: 'n10',
+    type: 'promo',
+    title: 'Broadcast Terkirim',
+    message: 'Broadcast "Promo Akhir Pekan" berhasil dikirim ke 24 pelanggan.',
+    isRead: true,
+    createdAt: '2024-01-18T14:00:00Z',
+  },
 ];
 
 export const mockOrders: Order[] = [

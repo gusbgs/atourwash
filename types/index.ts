@@ -97,6 +97,18 @@ export interface InventoryItem {
   createdAt: string;
 }
 
+export type NotificationType = 'order' | 'payment' | 'production' | 'promo' | 'system';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  orderId?: string;
+}
+
 export type StockMovementType = 'masuk' | 'keluar';
 
 export interface StockMovement {
