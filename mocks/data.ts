@@ -1,4 +1,4 @@
-import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement, Notification, BankAccount } from '@/types';
+import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement, Notification, BankAccount, OperationalBill } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -330,6 +330,19 @@ export const mockPaymentMethods = [
   { id: 'transfer', label: 'Transfer Bank', icon: '🏦', description: 'Transfer ke rekening toko' },
   { id: 'qris', label: 'QRIS', icon: '📱', description: 'Scan QR untuk bayar' },
   { id: 'edc', label: 'Kartu Debit/Kredit', icon: '💳', description: 'Gesek atau tap kartu' },
+];
+
+export const mockOperationalBills: OperationalBill[] = [
+  { id: 'bill1', category: 'listrik', month: 'Januari', year: 2026, amount: 1850000, usage: 1420, unit: 'kWh', dueDate: '2026-02-10', paidDate: '2026-02-05', status: 'lunas', provider: 'PLN', accountNumber: '5412 3456 7890', notes: 'Tarif R1/2200VA' },
+  { id: 'bill2', category: 'air', month: 'Januari', year: 2026, amount: 680000, usage: 85, unit: 'm³', dueDate: '2026-02-15', paidDate: '2026-02-12', status: 'lunas', provider: 'PDAM', accountNumber: '0012 4567 890', notes: 'Golongan 3A' },
+  { id: 'bill3', category: 'listrik', month: 'Februari', year: 2026, amount: 2100000, usage: 1580, unit: 'kWh', dueDate: '2026-03-10', status: 'belum_bayar', provider: 'PLN', accountNumber: '5412 3456 7890', notes: 'Tarif R1/2200VA' },
+  { id: 'bill4', category: 'air', month: 'Februari', year: 2026, amount: 720000, usage: 92, unit: 'm³', dueDate: '2026-03-15', status: 'belum_bayar', provider: 'PDAM', accountNumber: '0012 4567 890', notes: 'Golongan 3A' },
+  { id: 'bill5', category: 'listrik', month: 'Desember', year: 2025, amount: 1720000, usage: 1350, unit: 'kWh', dueDate: '2026-01-10', paidDate: '2026-01-08', status: 'lunas', provider: 'PLN', accountNumber: '5412 3456 7890' },
+  { id: 'bill6', category: 'air', month: 'Desember', year: 2025, amount: 620000, usage: 78, unit: 'm³', dueDate: '2026-01-15', paidDate: '2026-01-14', status: 'lunas', provider: 'PDAM', accountNumber: '0012 4567 890' },
+  { id: 'bill7', category: 'listrik', month: 'November', year: 2025, amount: 1650000, usage: 1280, unit: 'kWh', dueDate: '2025-12-10', paidDate: '2025-12-09', status: 'lunas', provider: 'PLN', accountNumber: '5412 3456 7890' },
+  { id: 'bill8', category: 'air', month: 'November', year: 2025, amount: 590000, usage: 74, unit: 'm³', dueDate: '2025-12-15', paidDate: '2025-12-10', status: 'lunas', provider: 'PDAM', accountNumber: '0012 4567 890' },
+  { id: 'bill9', category: 'listrik', month: 'Oktober', year: 2025, amount: 1780000, usage: 1390, unit: 'kWh', dueDate: '2025-11-10', paidDate: '2025-11-07', status: 'lunas', provider: 'PLN', accountNumber: '5412 3456 7890' },
+  { id: 'bill10', category: 'air', month: 'Oktober', year: 2025, amount: 650000, usage: 82, unit: 'm³', dueDate: '2025-11-15', paidDate: '2025-11-13', status: 'lunas', provider: 'PDAM', accountNumber: '0012 4567 890' },
 ];
 
 export const mockOrders: Order[] = [

@@ -130,6 +130,25 @@ export type PaymentMethod = 'tunai' | 'transfer' | 'qris' | 'edc';
 
 export type StockMovementType = 'masuk' | 'keluar';
 
+export type BillCategory = 'air' | 'listrik';
+export type BillStatus = 'lunas' | 'belum_bayar' | 'jatuh_tempo';
+
+export interface OperationalBill {
+  id: string;
+  category: BillCategory;
+  month: string;
+  year: number;
+  amount: number;
+  usage: number;
+  unit: string;
+  dueDate: string;
+  paidDate?: string;
+  status: BillStatus;
+  notes?: string;
+  provider: string;
+  accountNumber: string;
+}
+
 export interface StockMovement {
   id: string;
   itemId: string;

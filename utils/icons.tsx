@@ -64,6 +64,8 @@ import {
   InvoiceIcon,
   UserCheck01Icon,
   Sun01Icon,
+  FlashIcon,
+  EnergyIcon,
 } from '@hugeicons/core-free-icons';
 
 interface IconProps {
@@ -146,3 +148,5 @@ export const FilterHorizontal = createIcon(FilterHorizontalIcon);
 export const Receipt = createIcon(InvoiceIcon);
 export const UserCheck = createIcon(UserCheck01Icon);
 export const Sun = createIcon(Sun01Icon);
+export const Zap = createIcon(FlashIcon);
+export const Energy = createIcon(EnergyIcon);

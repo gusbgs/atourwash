@@ -175,6 +175,10 @@ function RootLayoutNav() {
         name="kelola-rekening" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="tagihan-operasional" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

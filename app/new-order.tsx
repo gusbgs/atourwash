@@ -812,8 +812,7 @@ export default function NewOrderScreen() {
                 onPress={handleConfirmOrder}
                 activeOpacity={0.8}
               >
-                <Printer size={18} color={colors.white} />
-                <Text style={styles.modalConfirmText}>Simpan & Cetak</Text>
+                <Text style={styles.modalConfirmText}>Buat Pesanan</Text>
               </TouchableOpacity>
             </View>
           </View>
