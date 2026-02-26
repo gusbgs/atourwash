@@ -131,6 +131,30 @@ function RootLayoutNav() {
         name="customer-detail" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="laporan-pendapatan" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="laporan-pengeluaran" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="laporan-order" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="laporan-pelanggan" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="laporan-inventaris" 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="laporan-karyawan" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

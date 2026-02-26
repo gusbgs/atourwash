@@ -13,15 +13,16 @@ interface ReportItem {
   icon: HugeIcon;
   iconColor: string;
   iconBg: string;
+  route: string;
 }
 
 const reports: ReportItem[] = [
-  { id: '1', title: 'Laporan Pendapatan', description: 'Ringkasan pendapatan harian, mingguan, dan bulanan', icon: BarChart3, iconColor: '#22C55E', iconBg: '#ECFDF5' },
-  { id: '2', title: 'Laporan Pengeluaran', description: 'Detail pengeluaran operasional', icon: PieChart, iconColor: '#EF4444', iconBg: '#FEF2F2' },
-  { id: '3', title: 'Laporan Order', description: 'Statistik order dan layanan populer', icon: FileText, iconColor: '#3B82F6', iconBg: '#EFF6FF' },
-  { id: '4', title: 'Laporan Pelanggan', description: 'Analisis pelanggan dan retensi', icon: BarChart3, iconColor: '#8B5CF6', iconBg: '#F5F3FF' },
-  { id: '5', title: 'Laporan Inventaris', description: 'Penggunaan bahan dan stok', icon: PieChart, iconColor: '#F59E0B', iconBg: '#FFFBEB' },
-  { id: '6', title: 'Laporan Karyawan', description: 'Performa dan kehadiran karyawan', icon: BarChart3, iconColor: '#EC4899', iconBg: '#FDF2F8' },
+  { id: '1', title: 'Laporan Pendapatan', description: 'Ringkasan pendapatan harian, mingguan, dan bulanan', icon: BarChart3, iconColor: '#22C55E', iconBg: '#ECFDF5', route: '/laporan-pendapatan' },
+  { id: '2', title: 'Laporan Pengeluaran', description: 'Detail pengeluaran operasional', icon: PieChart, iconColor: '#EF4444', iconBg: '#FEF2F2', route: '/laporan-pengeluaran' },
+  { id: '3', title: 'Laporan Order', description: 'Statistik order dan layanan populer', icon: FileText, iconColor: '#3B82F6', iconBg: '#EFF6FF', route: '/laporan-order' },
+  { id: '4', title: 'Laporan Pelanggan', description: 'Analisis pelanggan dan retensi', icon: BarChart3, iconColor: '#8B5CF6', iconBg: '#F5F3FF', route: '/laporan-pelanggan' },
+  { id: '5', title: 'Laporan Inventaris', description: 'Penggunaan bahan dan stok', icon: PieChart, iconColor: '#F59E0B', iconBg: '#FFFBEB', route: '/laporan-inventaris' },
+  { id: '6', title: 'Laporan Karyawan', description: 'Performa dan kehadiran karyawan', icon: BarChart3, iconColor: '#EC4899', iconBg: '#FDF2F8', route: '/laporan-karyawan' },
 ];
 
 const quickStats = [
@@ -66,7 +67,7 @@ export default function LaporanScreen() {
 
         <Text style={styles.sectionTitle}>Semua Laporan</Text>
         {reports.map(r => (
-          <TouchableOpacity key={r.id} style={styles.reportCard} activeOpacity={0.7}>
+          <TouchableOpacity key={r.id} style={styles.reportCard} activeOpacity={0.7} onPress={() => router.push(r.route as any)}>
             <View style={[styles.reportIcon, { backgroundColor: r.iconBg }]}>
               <r.icon size={22} color={r.iconColor} />
             </View>
