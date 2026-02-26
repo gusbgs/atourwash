@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Search } from '@/utils/icons';
+import { Search, ClipboardList, Clock, Wallet, Check } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { OrderCard } from '@/components/OrderCard';
@@ -11,11 +11,11 @@ import { OrdersSkeletonLoader } from '@/components/Skeleton';
 
 type FilterType = 'semua' | PaymentStatus;
 
-const filters: { key: FilterType; label: string }[] = [
-  { key: 'semua', label: 'Semua' },
-  { key: 'belum_bayar', label: 'Belum Bayar' },
-  { key: 'dp', label: 'DP' },
-  { key: 'lunas', label: 'Lunas' },
+const filters: { key: FilterType; label: string; icon: React.FC<{ size?: number; color?: string }> }[] = [
+  { key: 'semua', label: 'Semua', icon: ClipboardList },
+  { key: 'belum_bayar', label: 'Belum Bayar', icon: Clock },
+  { key: 'dp', label: 'DP', icon: Wallet },
+  { key: 'lunas', label: 'Lunas', icon: Check },
 ];
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -27,11 +27,21 @@ export default function OrdersScreen() {
   const [activeFilterIndex, setActiveFilterIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const indicatorAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  const animateIndicator = useCallback((index: number) => {
+    Animated.spring(indicatorAnim, {
+      toValue: index,
+      useNativeDriver: true,
+      tension: 68,
+      friction: 12,
+    }).start();
+  }, [indicatorAnim]);
 
   const getFilterCount = (filter: FilterType) => {
     if (filter === 'semua') return orders.length;
@@ -40,6 +50,7 @@ export default function OrdersScreen() {
 
   const handleTabPress = (index: number) => {
     setActiveFilterIndex(index);
+    animateIndicator(index);
     scrollViewRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
   };
 
@@ -48,6 +59,7 @@ export default function OrdersScreen() {
     const index = Math.round(offsetX / SCREEN_WIDTH);
     if (index !== activeFilterIndex && index >= 0 && index < filters.length) {
       setActiveFilterIndex(index);
+      animateIndicator(index);
     }
   };
 
@@ -70,6 +82,12 @@ export default function OrdersScreen() {
   const handleOrderPress = (orderId: string) => {
     router.push(`/order-detail?id=${orderId}` as any);
   };
+
+  const tabWidth = SCREEN_WIDTH / filters.length;
+  const indicatorTranslateX = indicatorAnim.interpolate({
+    inputRange: filters.map((_, i) => i),
+    outputRange: filters.map((_, i) => i * tabWidth),
+  });
 
   if (isLoading) {
     return (
@@ -97,30 +115,43 @@ export default function OrdersScreen() {
         />
       </View>
 
-      <View style={styles.tabsWrapper}>
-        <View style={styles.tabsContainer}>
-          {filters.map((filter, index) => {
-            const count = getFilterCount(filter.key);
-            const isActive = activeFilterIndex === index;
-            return (
-              <TouchableOpacity
-                key={filter.key}
-                style={[styles.tab, isActive && styles.tabActive]}
-                onPress={() => handleTabPress(index)}
-                activeOpacity={0.7}
-              >
+      <View style={styles.tabRow}>
+        {filters.map((filter, index) => {
+          const count = getFilterCount(filter.key);
+          const isActive = activeFilterIndex === index;
+          const IconComp = filter.icon;
+          return (
+            <TouchableOpacity
+              key={filter.key}
+              style={styles.tabItem}
+              onPress={() => handleTabPress(index)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabContent}>
+                <IconComp size={16} color={isActive ? colors.primary : colors.textSecondary} />
                 <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
                   {filter.label}
                 </Text>
-                <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                  <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
-                    {count}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                {count > 0 && (
+                  <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                    <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
+                      {count}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+        <Animated.View
+          style={[
+            styles.tabIndicator,
+            {
+              width: tabWidth - 24,
+              transform: [{ translateX: Animated.add(indicatorTranslateX, 12) }],
+            },
+          ]}
+        />
       </View>
 
       <ScrollView
@@ -141,15 +172,17 @@ export default function OrdersScreen() {
                 showsVerticalScrollIndicator={false}
               >
                 {filterOrders.map(order => (
-                  <OrderCard 
-                    key={order.id} 
-                    order={order} 
+                  <OrderCard
+                    key={order.id}
+                    order={order}
                     onPress={() => handleOrderPress(order.id)}
                   />
                 ))}
                 {filterOrders.length === 0 && (
                   <View style={styles.emptyState}>
-                    <Text style={styles.emptyText}>Tidak ada order ditemukan</Text>
+                    <ClipboardList size={48} color={colors.border} />
+                    <Text style={styles.emptyTitle}>Tidak ada pesanan</Text>
+                    <Text style={styles.emptyText}>Belum ada order untuk kategori ini</Text>
                   </View>
                 )}
               </ScrollView>
@@ -190,7 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
@@ -199,52 +232,42 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
   },
-  tabsWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  tabsContainer: {
+  tabRow: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceSecondary,
-    borderRadius: 12,
-    padding: 4,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    position: 'relative' as const,
   },
-  tab: {
+  tabItem: {
     flex: 1,
+    paddingVertical: 14,
+  },
+  tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 4,
-  },
-  tabActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    gap: 5,
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500' as const,
     color: colors.textSecondary,
   },
   tabTextActive: {
-    color: colors.text,
+    color: colors.primary,
     fontWeight: '600' as const,
   },
   tabBadge: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceSecondary,
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 1,
     borderRadius: 8,
-    minWidth: 20,
+    minWidth: 18,
     alignItems: 'center',
   },
   tabBadgeActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryBg,
   },
   tabBadgeText: {
     fontSize: 10,
@@ -252,7 +275,14 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   tabBadgeTextActive: {
-    color: colors.white,
+    color: colors.primary,
+  },
+  tabIndicator: {
+    position: 'absolute' as const,
+    bottom: 0,
+    height: 2.5,
+    backgroundColor: colors.primary,
+    borderRadius: 2,
   },
   pagerContainer: {
     flex: 1,
@@ -263,14 +293,23 @@ const styles = StyleSheet.create({
   },
   ordersContent: {
     paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 100,
   },
   emptyState: {
     padding: 40,
     alignItems: 'center',
+    gap: 8,
+    marginTop: 40,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.text,
+    marginTop: 8,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
   },
 });
