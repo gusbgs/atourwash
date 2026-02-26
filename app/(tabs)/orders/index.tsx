@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Search, ClipboardList, Clock, Wallet, Check } from '@/utils/icons';
+import { Search, ClipboardList, Clock, Wallet, Check, X, Settings } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
 import { OrderCard } from '@/components/OrderCard';
@@ -91,28 +91,36 @@ export default function OrdersScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.container}>
+        <View style={styles.appbarBg}>
+          <SafeAreaView edges={['top']} style={styles.appbarSafe}>
+            <View style={styles.appbar}>
+              <Text style={styles.appbarTitle}>Pesanan</Text>
+              <View style={styles.appbarRight}>
+                <Settings size={20} color={colors.white} />
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
         <OrdersSkeletonLoader />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Pesanan</Text>
-        <Text style={styles.subtitle}>Kelola semua pesanan</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <Search size={20} color={colors.textTertiary} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Cari order atau pelanggan..."
-          placeholderTextColor={colors.textTertiary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+    <View style={styles.container}>
+      <View style={styles.appbarBg}>
+        <SafeAreaView edges={['top']} style={styles.appbarSafe}>
+          <View style={styles.appbar}>
+            <View style={styles.appbarTitleSection}>
+              <Text style={styles.appbarTitle}>Pesanan</Text>
+              <Text style={styles.appbarSubtitle}>Kelola semua pesanan</Text>
+            </View>
+            <TouchableOpacity style={styles.appbarIconBtn} activeOpacity={0.7}>
+              <Settings size={18} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
       </View>
 
       <View style={styles.tabRow}>
@@ -128,17 +136,18 @@ export default function OrdersScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.tabContent}>
-                <IconComp size={16} color={isActive ? colors.primary : colors.textSecondary} />
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                <IconComp size={14} color={isActive ? colors.primary : colors.textTertiary} />
+                <Text
+                  style={[styles.tabText, isActive && styles.tabTextActive]}
+                  numberOfLines={1}
+                >
                   {filter.label}
                 </Text>
-                {count > 0 && (
-                  <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                    <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
-                      {count}
-                    </Text>
-                  </View>
-                )}
+                <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                  <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
+                    {count}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -147,11 +156,29 @@ export default function OrdersScreen() {
           style={[
             styles.tabIndicator,
             {
-              width: tabWidth - 24,
-              transform: [{ translateX: Animated.add(indicatorTranslateX, 12) }],
+              width: tabWidth - 16,
+              transform: [{ translateX: Animated.add(indicatorTranslateX, 8) }],
             },
           ]}
         />
+      </View>
+
+      <View style={styles.searchWrapper}>
+        <View style={styles.searchContainer}>
+          <Search size={18} color={colors.textTertiary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Cari order atau pelanggan..."
+            placeholderTextColor={colors.textTertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
+              <X size={16} color={colors.textTertiary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView
@@ -190,7 +217,7 @@ export default function OrdersScreen() {
           );
         })}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -199,38 +226,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  appbarBg: {
+    backgroundColor: colors.primary,
+  },
+  appbarSafe: {
+    backgroundColor: colors.primary,
+  },
+  appbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 16,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: colors.text,
+  appbarTitleSection: {
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
+  appbarTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: colors.white,
+  },
+  appbarSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
     marginTop: 2,
   },
-  searchContainer: {
-    flexDirection: 'row',
+  appbarIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    marginHorizontal: 20,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 12,
   },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    fontSize: 15,
-    color: colors.text,
+  appbarRight: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabRow: {
     flexDirection: 'row',
@@ -241,18 +278,20 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 2,
   },
   tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    gap: 4,
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500' as const,
-    color: colors.textSecondary,
+    color: colors.textTertiary,
+    flexShrink: 1,
   },
   tabTextActive: {
     color: colors.primary,
@@ -260,7 +299,7 @@ const styles = StyleSheet.create({
   },
   tabBadge: {
     backgroundColor: colors.surfaceSecondary,
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 8,
     minWidth: 18,
@@ -272,7 +311,7 @@ const styles = StyleSheet.create({
   tabBadgeText: {
     fontSize: 10,
     fontWeight: '600' as const,
-    color: colors.textSecondary,
+    color: colors.textTertiary,
   },
   tabBadgeTextActive: {
     color: colors.primary,
@@ -284,6 +323,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 2,
   },
+  searchWrapper: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    color: colors.text,
+  },
   pagerContainer: {
     flex: 1,
   },
@@ -292,8 +353,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ordersContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: 100,
   },
   emptyState: {
