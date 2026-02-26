@@ -32,7 +32,6 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
       onPress={onPress}
       activeOpacity={0.6}
     >
-      <View style={[styles.indicator, { backgroundColor: getStatusColor() }]} />
       <View style={[styles.content, !isLast && styles.contentBorder]}>
         <View style={styles.mainInfo}>
           <View style={styles.topRow}>
@@ -64,20 +63,12 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     backgroundColor: colors.white,
   },
-  indicator: {
-    width: 4,
-    borderRadius: 2,
-    marginLeft: 16,
-    marginVertical: 12,
-  },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingRight: 16,
-    paddingLeft: 12,
-    marginLeft: 0,
+    paddingHorizontal: 16,
   },
   contentBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
