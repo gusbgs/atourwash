@@ -5,9 +5,9 @@ import { useRouter, Stack } from 'expo-router';
 import { ArrowLeft, User, Minus, Plus, Check, Weight, ShoppingBag, Search, X, FileText, Printer, ChevronLeft, CheckCircle2 } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/contexts/AppContext';
-import { mockKiloanServices, mockSatuanItems, mockFragrances } from '@/mocks/data';
+import { mockKiloanServices, mockSatuanItems, mockFragrances, mockPaymentMethods } from '@/mocks/data';
 import { formatFullCurrency } from '@/utils/format';
-import { Order } from '@/types';
+import { Order, PaymentMethod } from '@/types';
 
 interface CustomerSuggestion {
   name: string;
@@ -81,6 +81,7 @@ export default function NewOrderScreen() {
   }, []);
 
   const [selectedFragrance, setSelectedFragrance] = useState('f1');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('tunai');
 
   const [showKiloan, setShowKiloan] = useState(true);
   const [showSatuan, setShowSatuan] = useState(false);
@@ -275,6 +276,7 @@ export default function NewOrderScreen() {
       itemDetails: parts.join(', '),
       estimatedDate: estimatedDate.toISOString().split('T')[0],
       fragrance: chosenFrag?.name,
+      paymentMethod: selectedPaymentMethod,
     };
 
     addOrder(newOrder);
@@ -753,6 +755,39 @@ export default function NewOrderScreen() {
                   {mockFragrances.find(f => f.id === selectedFragrance)?.icon}{' '}
                   {mockFragrances.find(f => f.id === selectedFragrance)?.name}
                 </Text>
+              </View>
+
+              <View style={styles.confirmDivider} />
+
+              <View style={styles.confirmSection}>
+                <Text style={styles.confirmLabel}>Metode Pembayaran</Text>
+                <View style={styles.paymentMethodGrid}>
+                  {mockPaymentMethods.map(method => {
+                    const isSelected = selectedPaymentMethod === method.id;
+                    return (
+                      <TouchableOpacity
+                        key={method.id}
+                        style={[
+                          styles.paymentMethodCard,
+                          isSelected && styles.paymentMethodCardSelected,
+                        ]}
+                        onPress={() => setSelectedPaymentMethod(method.id as PaymentMethod)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.paymentMethodIcon}>{method.icon}</Text>
+                        <Text style={[
+                          styles.paymentMethodLabel,
+                          isSelected && styles.paymentMethodLabelSelected,
+                        ]}>{method.label}</Text>
+                        {isSelected && (
+                          <View style={styles.paymentMethodCheck}>
+                            <Check size={10} color={colors.white} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
 
               <View style={styles.confirmDivider} />
@@ -1319,6 +1354,49 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500' as const,
     color: colors.textSecondary,
+  },
+  paymentMethodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  paymentMethodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    width: '48%' as any,
+  },
+  paymentMethodCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryBg,
+  },
+  paymentMethodIcon: {
+    fontSize: 18,
+  },
+  paymentMethodLabel: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  paymentMethodLabelSelected: {
+    color: colors.primaryDark,
+    fontWeight: '600' as const,
+  },
+  paymentMethodCheck: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fragranceCheck: {
     width: 16,

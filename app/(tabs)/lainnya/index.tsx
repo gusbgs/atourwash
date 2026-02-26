@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Users, Building2, Wallet, Package, FileText, Settings, HelpCircle, Bell, Shield, Truck, Tag, UserCog, Printer, MessageSquare, Mail, Factory } from '@/utils/icons';
+import { Users, Building2, Wallet, Package, FileText, Settings, HelpCircle, Bell, Shield, Truck, Tag, UserCog, Printer, MessageSquare, Mail, Factory, CreditCard } from '@/utils/icons';
 import type { HugeIcon } from '@/utils/icons';
 import { colors } from '@/constants/colors';
 
@@ -31,6 +31,7 @@ const menuGroups: { title: string; items: MenuItem[] }[] = [
     title: 'Keuangan & Laporan',
     items: [
       { icon: Wallet, label: 'Keuangan', color: MENU_COLOR, bgColor: MENU_BG, route: '/keuangan' },
+      { icon: CreditCard, label: 'Kelola Rekening', color: MENU_COLOR, bgColor: MENU_BG, route: '/kelola-rekening' },
       { icon: FileText, label: 'Laporan', color: MENU_COLOR, bgColor: MENU_BG, route: '/laporan' },
       { icon: Tag, label: 'Promo', color: MENU_COLOR, bgColor: MENU_BG },
     ],

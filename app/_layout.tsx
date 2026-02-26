@@ -171,6 +171,10 @@ function RootLayoutNav() {
         name="notifikasi" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="kelola-rekening" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement, Notification } from '@/types';
+import { Order, Service, User, ShiftInfo, DashboardStats, Branch, BroadcastTemplate, BroadcastHistory, InventoryItem, StockMovement, Notification, BankAccount } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -307,6 +307,22 @@ export const mockNotifications: Notification[] = [
     isRead: true,
     createdAt: '2024-01-18T14:00:00Z',
   },
+];
+
+export const mockBankAccounts: BankAccount[] = [
+  { id: 'ba1', bankName: 'BCA', accountNumber: '1234567890', accountHolder: 'AtourWash', isActive: true, icon: '🏦' },
+  { id: 'ba2', bankName: 'BNI', accountNumber: '0987654321', accountHolder: 'AtourWash', isActive: true, icon: '🏛️' },
+  { id: 'ba3', bankName: 'Mandiri', accountNumber: '1122334455', accountHolder: 'AtourWash', isActive: false, icon: '🏢' },
+  { id: 'ba4', bankName: 'BRI', accountNumber: '5566778899', accountHolder: 'AtourWash', isActive: true, icon: '🏗️' },
+  { id: 'ba5', bankName: 'Dana', accountNumber: '081234567890', accountHolder: 'AtourWash', isActive: true, icon: '💳' },
+  { id: 'ba6', bankName: 'GoPay', accountNumber: '081234567890', accountHolder: 'AtourWash', isActive: false, icon: '📱' },
+];
+
+export const mockPaymentMethods = [
+  { id: 'tunai', label: 'Tunai', icon: '💵', description: 'Pembayaran langsung di kasir' },
+  { id: 'transfer', label: 'Transfer Bank', icon: '🏦', description: 'Transfer ke rekening toko' },
+  { id: 'qris', label: 'QRIS', icon: '📱', description: 'Scan QR untuk bayar' },
+  { id: 'edc', label: 'Kartu Debit/Kredit', icon: '💳', description: 'Gesek atau tap kartu' },
 ];
 
 export const mockOrders: Order[] = [

@@ -22,6 +22,7 @@ export interface Order {
   notes?: string;
   estimatedDate: string;
   fragrance?: string;
+  paymentMethod?: PaymentMethod;
 }
 
 export interface Service {
@@ -108,6 +109,17 @@ export interface Notification {
   createdAt: string;
   orderId?: string;
 }
+
+export interface BankAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  isActive: boolean;
+  icon: string;
+}
+
+export type PaymentMethod = 'tunai' | 'transfer' | 'qris' | 'edc';
 
 export type StockMovementType = 'masuk' | 'keluar';
 
