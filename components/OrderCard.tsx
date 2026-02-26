@@ -6,14 +6,14 @@ import { Order, ProductionStatus } from '@/types';
 import { PaymentBadge } from './PaymentBadge';
 import { formatFullCurrency, formatDate } from '@/utils/format';
 
-const PRODUCTION_STEPS: { key: ProductionStatus; label: string }[] = [
-  { key: 'antrian', label: 'Antrian' },
-  { key: 'diproses', label: 'Diproses' },
-  { key: 'siap_diambil', label: 'Siap Diambil' },
+const PRODUCTION_STEPS: { key: ProductionStatus; label: string; color: string; bgColor: string }[] = [
+  { key: 'antrian', label: 'Diterima', color: '#3B82F6', bgColor: '#DBEAFE' },
+  { key: 'diproses', label: 'Proses', color: '#F59E0B', bgColor: '#FEF3C7' },
+  { key: 'siap_diambil', label: 'Siap Diambil', color: '#8B5CF6', bgColor: '#EDE9FE' },
+  { key: 'selesai', label: 'Selesai', color: '#10B981', bgColor: '#D1FAE5' },
 ];
 
 function getStepIndex(status: ProductionStatus): number {
-  if (status === 'selesai') return 3;
   const idx = PRODUCTION_STEPS.findIndex(s => s.key === status);
   return idx >= 0 ? idx + 1 : 0;
 }
@@ -24,19 +24,16 @@ interface OrderCardProps {
   isLast?: boolean;
 }
 
+function StepCheckIcon({ color, size = 12 }: { color: string; size?: number }) {
+  return (
+    <Text style={{ fontSize: size - 1, color, fontWeight: '800' as const, marginTop: -1 }}>
+      {'\u2713'}
+    </Text>
+  );
+}
+
 export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
-  const getStatusColor = () => {
-    switch (order.paymentStatus) {
-      case 'lunas':
-        return colors.paymentLunas;
-      case 'dp':
-        return colors.paymentDp;
-      case 'belum_bayar':
-        return colors.paymentBelumBayar;
-      default:
-        return colors.border;
-    }
-  };
+  const stepIdx = getStepIndex(order.productionStatus);
 
   return (
     <TouchableOpacity
@@ -72,22 +69,24 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
           <View style={styles.stepsContainer}>
             <View style={styles.stepsDotsRow}>
               {PRODUCTION_STEPS.map((step, i) => {
-                const completed = getStepIndex(order.productionStatus) > i;
-                const active = getStepIndex(order.productionStatus) === i + 1 && order.productionStatus !== 'selesai';
+                const completed = stepIdx > i;
+                const active = stepIdx === i + 1;
                 const isLastStep = i === PRODUCTION_STEPS.length - 1;
+                const lineCompleted = stepIdx > i + 1;
                 return (
                   <React.Fragment key={step.key}>
                     <View style={[
                       styles.stepDot,
-                      completed && styles.stepDotCompleted,
-                      active && styles.stepDotActive,
+                      completed && { backgroundColor: step.color, borderColor: step.color },
+                      active && { borderColor: step.color, backgroundColor: step.bgColor },
                     ]}>
-                      {completed && <Text style={styles.stepCheck}>\u2713</Text>}
+                      {completed && <StepCheckIcon color={colors.white} size={13} />}
+                      {active && <StepCheckIcon color={step.color} size={13} />}
                     </View>
                     {!isLastStep && (
                       <View style={[
                         styles.stepLine,
-                        completed && styles.stepLineCompleted,
+                        lineCompleted && { backgroundColor: PRODUCTION_STEPS[i + 1].color },
                       ]} />
                     )}
                   </React.Fragment>
@@ -96,15 +95,14 @@ export function OrderCard({ order, onPress, isLast = false }: OrderCardProps) {
             </View>
             <View style={styles.stepsLabelsRow}>
               {PRODUCTION_STEPS.map((step, i) => {
-                const completed = getStepIndex(order.productionStatus) > i;
-                const active = getStepIndex(order.productionStatus) === i + 1 && order.productionStatus !== 'selesai';
+                const completed = stepIdx > i;
+                const active = stepIdx === i + 1;
                 return (
                   <Text
                     key={step.key}
                     style={[
                       styles.stepLabel,
-                      completed && styles.stepLabelCompleted,
-                      active && styles.stepLabelActive,
+                      (completed || active) && { color: step.color, fontWeight: '600' as const },
                     ]}
                     numberOfLines={1}
                   >
@@ -215,7 +213,7 @@ const styles = StyleSheet.create({
   stepsDotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 8,
   },
   stepsLabelsRow: {
     flexDirection: 'row',
@@ -232,42 +230,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  stepDotCompleted: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  stepDotActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryBg,
-  },
-  stepCheck: {
-    fontSize: 11,
-    color: colors.white,
-    fontWeight: '700' as const,
-    marginTop: -1,
-  },
   stepLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textTertiary,
     fontWeight: '500' as const,
     textAlign: 'center' as const,
     flex: 1,
   },
-  stepLabelCompleted: {
-    color: colors.primary,
-    fontWeight: '600' as const,
-  },
-  stepLabelActive: {
-    color: colors.primary,
-    fontWeight: '600' as const,
-  },
   stepLine: {
     flex: 1,
     height: 2,
     backgroundColor: colors.border,
-    marginHorizontal: 6,
-  },
-  stepLineCompleted: {
-    backgroundColor: colors.primary,
+    marginHorizontal: 3,
   },
 });
